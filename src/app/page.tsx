@@ -55,6 +55,7 @@ export default function Home() {
   const [sidebarOpen,  setSidebarOpen]  = useState(true);
   const [pending,      setPending]      = useState<{ lat: number; lng: number } | null>(null);
   const [streetView,   setStreetView]   = useState<StreetViewLocation | null>(null);
+  const [showPins,     setShowPins]     = useState(true);
 
   // Sync dark/light class on <html>
   useEffect(() => {
@@ -132,14 +133,22 @@ export default function Home() {
       {inStreetView && streetView && (
         <div className="absolute inset-0 z-10">
           {/* Full-screen panorama */}
-          <StreetViewScene lat={streetView.lat} lng={streetView.lng} theme={theme} />
+          <StreetViewScene
+            lat={streetView.lat}
+            lng={streetView.lng}
+            theme={theme}
+            locations={locations}
+            showPins={showPins}
+          />
 
           {/* Top header overlay */}
           <StreetViewHeader
             location={streetView}
             theme={theme}
+            showPins={showPins}
             onClose={closeStreetView}
             onToggleTheme={toggleTheme}
+            onTogglePins={() => setShowPins(v => !v)}
           />
 
           {/* Mini heatmap in bottom-right corner */}

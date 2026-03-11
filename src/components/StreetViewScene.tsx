@@ -2,12 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
-import { Theme } from "@/lib/types";
+import { Theme, Location } from "@/lib/types";
 
 declare global {
-  interface Window {
-    gm_authFailure?: () => void;
-  }
+  interface Window { gm_authFailure?: () => void }
 }
 
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
@@ -20,19 +18,148 @@ function getLoader() {
 
 type SceneState = "loading" | "ready" | "no-coverage" | "no-key" | "auth-error" | "error";
 
-interface Props { lat: number; lng: number; theme: Theme }
+interface Props {
+  lat: number;
+  lng: number;
+  theme: Theme;
+  locations: Location[];
+  showPins: boolean;
+}
 
-export default function StreetViewScene({ lat, lng, theme }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
+/* ── Inject keyframe animation once ───────────────────────────────── */
+let animInjected = false;
+function ensureAnimation() {
+  if (animInjected || typeof document === "undefined") return;
+  animInjected = true;
+  const s = document.createElement("style");
+  s.textContent = `
+    @keyframes svFloat {
+      0%,100% { transform: translate(-50%,-100%) translateY(0px); }
+      50%      { transform: translate(-50%,-100%) translateY(-7px); }
+    }
+    @keyframes svPulse {
+      0%,100% { box-shadow: 0 0 0 3px var(--pin-ring), 0 4px 16px rgba(0,0,0,.5); }
+      50%      { box-shadow: 0 0 0 7px var(--pin-ring), 0 4px 20px rgba(0,0,0,.6); }
+    }
+  `;
+  document.head.appendChild(s);
+}
+
+/* ── Build the pin DOM element ─────────────────────────────────────── */
+function makePinEl(label: string, isDark: boolean): HTMLDivElement {
+  ensureAnimation();
+  const ring  = isDark ? "rgba(34,211,238,0.35)"  : "rgba(2,132,199,0.3)";
+  const dot   = isDark ? "#22d3ee"                 : "#0284c7";
+  const chipBg= isDark ? "rgba(7,12,26,0.93)"      : "rgba(255,255,255,0.96)";
+  const chipTx= isDark ? "#f1f5f9"                 : "#0f172a";
+  const chipBr= isDark ? "rgba(34,211,238,0.35)"   : "rgba(2,132,199,0.3)";
+
+  const el = document.createElement("div");
+  el.style.cssText = `
+    position: absolute;
+    transform: translate(-50%, -100%);
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 100;
+    animation: svFloat 2.8s ease-in-out infinite;
+  `;
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <!-- label chip -->
+      <div style="
+        background:${chipBg};color:${chipTx};
+        border:1px solid ${chipBr};
+        border-radius:10px;padding:5px 11px;
+        font-size:12px;font-weight:700;
+        font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;
+        white-space:nowrap;letter-spacing:-.01em;
+        backdrop-filter:blur(14px);
+        box-shadow:0 6px 28px rgba(0,0,0,.55);
+      ">${label}</div>
+      <!-- stem -->
+      <div style="
+        width:1.5px;height:22px;
+        background:linear-gradient(to bottom,${dot},transparent);
+      "></div>
+      <!-- dot -->
+      <div style="
+        width:13px;height:13px;border-radius:50%;
+        background:${dot};border:2.5px solid #fff;
+        --pin-ring:${ring};
+        animation:svPulse 2.8s ease-in-out infinite;
+      "></div>
+    </div>`;
+  return el;
+}
+
+/* ── OverlayView subclass ──────────────────────────────────────────── */
+class StreetViewPin {
+  private overlay: google.maps.OverlayView;
+  readonly el: HTMLDivElement;
+
+  constructor(
+    pos: google.maps.LatLng,
+    label: string,
+    isDark: boolean,
+    panorama: google.maps.StreetViewPanorama,
+    container: HTMLDivElement
+  ) {
+    this.el = makePinEl(label, isDark);
+    const el = this.el;
+
+    // We need google.maps.OverlayView — grab it from the global
+    const OV = (window as unknown as { google: typeof google }).google.maps.OverlayView;
+
+    class PinOverlay extends OV {
+      onAdd() {
+        this.getPanes()!.overlayMouseTarget.appendChild(el);
+      }
+      draw() {
+        const proj = this.getProjection();
+        if (!proj) return;
+        const px = proj.fromLatLngToContainerPixel(pos);
+        if (!px) { el.style.visibility = "hidden"; return; }
+        // Hide if well outside the viewport (behind camera)
+        const w = container.offsetWidth;
+        const h = container.offsetHeight;
+        if (px.x < -300 || px.x > w + 300 || px.y < -300 || px.y > h + 300) {
+          el.style.visibility = "hidden";
+        } else {
+          el.style.visibility = "visible";
+          el.style.left = `${px.x}px`;
+          el.style.top  = `${px.y}px`;
+        }
+      }
+      onRemove() { el.remove(); }
+    }
+
+    this.overlay = new PinOverlay();
+    this.overlay.setMap(panorama);
+  }
+
+  setVisible(v: boolean) {
+    this.el.style.display = v ? "" : "none";
+  }
+
+  remove() {
+    this.overlay.setMap(null);
+  }
+}
+
+/* ── Main component ────────────────────────────────────────────────── */
+export default function StreetViewScene({ lat, lng, theme, locations, showPins }: Props) {
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const panoramaRef   = useRef<google.maps.StreetViewPanorama | null>(null);
+  const pinsRef       = useRef<StreetViewPin[]>([]);
   const [state, setState] = useState<SceneState>("loading");
   const isDark = theme === "dark";
 
+  /* ── Mount panorama ──────────────────────────────────────────────── */
   useEffect(() => {
     if (!API_KEY) { setState("no-key"); return; }
     if (!containerRef.current) return;
     setState("loading");
 
-    // Google Maps calls this global when the key is invalid / APIs not enabled
     window.gm_authFailure = () => setState("auth-error");
 
     Promise.all([
@@ -47,10 +174,9 @@ export default function StreetViewScene({ lat, lng, theme }: Props) {
         svc.getPanorama({ location: { lat, lng }, radius }, (data, status) => {
           if (status !== StreetViewStatus.OK || !containerRef.current) {
             if (fallback) { tryRadius(fallback); return; }
-            setState("no-coverage");
-            return;
+            setState("no-coverage"); return;
           }
-          new StreetViewPanorama(containerRef.current!, {
+          const pano = new StreetViewPanorama(containerRef.current!, {
             position:              data!.location!.latLng!,
             pov:                   { heading: 0, pitch: 0 },
             zoom:                  0,
@@ -64,38 +190,72 @@ export default function StreetViewScene({ lat, lng, theme }: Props) {
             panControl:            true,
             zoomControl:           false,
           });
+          panoramaRef.current = pano;
+
+          // Add pins once the panorama tiles load
+          pano.addListener("status_changed", () => {
+            buildPins(pano, locations, isDark, showPins);
+          });
           setState("ready");
         });
       };
       tryRadius(80, 500);
     }).catch(() => setState("error"));
+
+    return () => {
+      pinsRef.current.forEach(p => p.remove());
+      pinsRef.current = [];
+      panoramaRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lng]);
 
-  /* ── Shared style tokens ─────────────────────────────────────────── */
+  /* ── Sync pin visibility ─────────────────────────────────────────── */
+  useEffect(() => {
+    pinsRef.current.forEach(p => p.setVisible(showPins));
+  }, [showPins]);
+
+  /* ── Build / rebuild pins ────────────────────────────────────────── */
+  function buildPins(
+    pano: google.maps.StreetViewPanorama,
+    locs: Location[],
+    dark: boolean,
+    visible: boolean
+  ) {
+    pinsRef.current.forEach(p => p.remove());
+    pinsRef.current = [];
+    if (!containerRef.current) return;
+    const cont = containerRef.current;
+    locs.forEach(loc => {
+      const pos = new (window as unknown as { google: typeof google }).google.maps.LatLng(loc.lat, loc.lng);
+      const pin = new StreetViewPin(pos, loc.label, dark, pano, cont);
+      if (!visible) pin.setVisible(false);
+      pinsRef.current.push(pin);
+    });
+  }
+
+  /* ── Shared tokens ───────────────────────────────────────────────── */
   const bg   = isDark ? "bg-[#060a18]" : "bg-slate-100";
   const txt  = isDark ? "text-slate-200" : "text-slate-700";
   const sub  = isDark ? "text-slate-500" : "text-slate-400";
   const code = isDark ? "bg-white/[0.06] text-cyan-300" : "bg-slate-200 text-sky-700";
   const link = "text-cyan-400 hover:text-cyan-300 underline underline-offset-2 transition-colors";
 
-  /* ── Utility: step row ───────────────────────────────────────────── */
   const Step = ({ n, children }: { n: number; children: React.ReactNode }) => (
     <div className="flex items-start gap-3 text-left">
       <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5 ${
-        isDark ? "bg-cyan-500/15 text-cyan-400" : "bg-sky-100 text-sky-600"
-      }`}>{n}</span>
+        isDark ? "bg-cyan-500/15 text-cyan-400" : "bg-sky-100 text-sky-600"}`}>{n}</span>
       <span className={`text-sm leading-relaxed ${sub}`}>{children}</span>
     </div>
   );
 
-  /* ── no-key ─────────────────────────────────────────────────────── */
   if (state === "no-key") return (
     <div className={`w-full h-full flex items-center justify-center ${bg}`}>
       <div className="max-w-sm w-full text-center space-y-5 px-6">
         <KeyIcon color="amber" />
         <p className={`text-base font-semibold ${txt}`}>API key not set</p>
         <p className={`text-sm ${sub}`}>
-          Add your key to <code className={`text-xs px-1.5 py-0.5 rounded ${code}`}>.env.local</code> and restart the dev server:
+          Add your key to <code className={`text-xs px-1.5 py-0.5 rounded ${code}`}>.env.local</code> and restart:
         </p>
         <pre className={`text-xs font-mono text-left rounded-xl px-4 py-3 leading-loose ${code}`}>
           NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key
@@ -108,59 +268,24 @@ export default function StreetViewScene({ lat, lng, theme }: Props) {
     </div>
   );
 
-  /* ── auth-error (InvalidKeyMapError) ────────────────────────────── */
   if (state === "auth-error") return (
     <div className={`w-full h-full flex items-center justify-center ${bg}`}>
       <div className="max-w-md w-full space-y-5 px-6">
-        <div className="text-center">
-          <KeyIcon color="red" />
+        <div className="text-center"><KeyIcon color="red" />
           <p className={`text-base font-semibold mt-4 ${txt}`}>InvalidKeyMapError</p>
-          <p className={`text-sm mt-1 ${sub}`}>
-            Your key is set but Google rejected it. Fix the key in Google Cloud Console:
-          </p>
+          <p className={`text-sm mt-1 ${sub}`}>Your key was rejected. Work through these steps:</p>
         </div>
-
         <div className="space-y-3">
-          <Step n={1}>
-            Open{" "}
-            <a href="https://console.cloud.google.com/apis/library/maps-backend.googleapis.com"
-              target="_blank" rel="noopener noreferrer" className={link}>
-              Maps JavaScript API
-            </a>{" "}
-            and click <strong className={txt}>Enable</strong>.
-          </Step>
-          <Step n={2}>
-            Open{" "}
-            <a href="https://console.cloud.google.com/billing"
-              target="_blank" rel="noopener noreferrer" className={link}>
-              Billing
-            </a>{" "}
-            and make sure a billing account is linked to the project.{" "}
-            <span className={sub}>(Google gives a $200/month free credit — no charge for normal use.)</span>
-          </Step>
-          <Step n={3}>
-            Open{" "}
-            <a href="https://console.cloud.google.com/google/maps-apis/credentials"
-              target="_blank" rel="noopener noreferrer" className={link}>
-              Credentials
-            </a>
-            , click your key → under <strong className={txt}>API restrictions</strong> select{" "}
-            <strong className={txt}>Don&apos;t restrict key</strong> (or add Maps JavaScript API).
-          </Step>
-          <Step n={4}>
-            Under <strong className={txt}>Application restrictions</strong>, make sure{" "}
-            <code className={`text-xs px-1 py-0.5 rounded ${code}`}>localhost</code> is allowed (or set to None for dev).
-          </Step>
+          <Step n={1}><a href="https://console.cloud.google.com/apis/library/maps-backend.googleapis.com" target="_blank" rel="noopener noreferrer" className={link}>Maps JavaScript API</a> → click <strong className={txt}>Enable</strong>.</Step>
+          <Step n={2}><a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener noreferrer" className={link}>Billing</a> → link a billing account. <span className="opacity-70">(Free $200/month credit — you won&apos;t be charged for normal use.)</span></Step>
+          <Step n={3}><a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener noreferrer" className={link}>Credentials</a> → your key → <strong className={txt}>API restrictions</strong>: select &ldquo;Don&apos;t restrict&rdquo; or add Maps JavaScript API.</Step>
+          <Step n={4}><strong className={txt}>Application restrictions</strong>: allow <code className={`text-xs px-1 py-0.5 rounded ${code}`}>localhost</code> or set to None for dev.</Step>
         </div>
-
-        <p className={`text-xs text-center ${sub}`}>
-          After saving, hard-refresh the app (<kbd className={`px-1 py-0.5 rounded text-[10px] ${code}`}>Ctrl+Shift+R</kbd>).
-        </p>
+        <p className={`text-xs text-center ${sub}`}>After saving, hard-refresh (<kbd className={`px-1 py-0.5 rounded text-[10px] ${code}`}>Ctrl+Shift+R</kbd>).</p>
       </div>
     </div>
   );
 
-  /* ── no-coverage ─────────────────────────────────────────────────── */
   if (state === "no-coverage") {
     const ext = `https://www.google.com/maps?q=${lat},${lng}&layer=c&cbll=${lat},${lng}`;
     return (
@@ -172,16 +297,13 @@ export default function StreetViewScene({ lat, lng, theme }: Props) {
             </svg>
           </div>
           <p className={`text-base font-semibold ${txt}`}>No Street View here</p>
-          <p className={`text-sm ${sub}`}>No imagery available within 500m of this spot.</p>
-          <a href={ext} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center gap-1.5 text-sm ${link}`}>
-            Open in Google Maps →
-          </a>
+          <p className={`text-sm ${sub}`}>No imagery available within 500m.</p>
+          <a href={ext} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center gap-1.5 text-sm ${link}`}>Open in Google Maps →</a>
         </div>
       </div>
     );
   }
 
-  /* ── generic error ───────────────────────────────────────────────── */
   if (state === "error") return (
     <div className={`w-full h-full flex items-center justify-center ${bg}`}>
       <div className="text-center space-y-2 px-6">
@@ -191,7 +313,6 @@ export default function StreetViewScene({ lat, lng, theme }: Props) {
     </div>
   );
 
-  /* ── panorama + loading overlay ─────────────────────────────────── */
   return (
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
@@ -209,9 +330,7 @@ export default function StreetViewScene({ lat, lng, theme }: Props) {
 }
 
 function KeyIcon({ color }: { color: "amber" | "red" }) {
-  const ring = color === "amber"
-    ? "bg-amber-400/10 border-amber-400/25"
-    : "bg-red-500/10 border-red-500/25";
+  const ring = color === "amber" ? "bg-amber-400/10 border-amber-400/25" : "bg-red-500/10 border-red-500/25";
   const icon = color === "amber" ? "text-amber-400" : "text-red-400";
   return (
     <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center mx-auto ${ring}`}>
