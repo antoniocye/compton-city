@@ -2,31 +2,30 @@
 
 import dynamic from "next/dynamic";
 import { useState, useCallback, useEffect } from "react";
-import { Location, HeatmapSettings, Theme } from "@/lib/types";
+import { Location, HeatmapSettings, Theme, StreetViewLocation } from "@/lib/types";
 import { SAMPLE_LOCATIONS } from "@/lib/sampleData";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import Legend from "@/components/Legend";
-import StreetViewPanel, { StreetViewLocation } from "@/components/StreetViewPanel";
+import StreetViewHeader from "@/components/StreetViewHeader";
+import MiniMap from "@/components/MiniMap";
 
 const HeatmapMap = dynamic(() => import("@/components/HeatmapMap"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-[#06091a]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative w-10 h-10">
-          <div className="absolute inset-0 rounded-full border-2 border-cyan-500/15" />
-          <div className="absolute inset-0 rounded-full border-2 border-t-cyan-400 animate-spin" />
-        </div>
-        <p className="text-slate-600 text-xs tracking-[0.2em] uppercase">Loading map…</p>
+      <div className="relative w-10 h-10">
+        <div className="absolute inset-0 rounded-full border-2 border-cyan-500/15" />
+        <div className="absolute inset-0 rounded-full border-2 border-t-cyan-400 animate-spin" />
       </div>
     </div>
   ),
 });
 
+const StreetViewScene = dynamic(() => import("@/components/StreetViewScene"), { ssr: false });
+
 let nextId = SAMPLE_LOCATIONS.length + 1;
 
-/** Haversine distance in metres */
 function distanceM(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6_371_000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -39,67 +38,63 @@ function distanceM(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function nearestLabel(lat: number, lng: number, locations: Location[]): string {
+function nearestLabel(lat: number, lng: number, locs: Location[]): string {
   let best: Location | null = null;
-  let bestDist = Infinity;
-  for (const loc of locations) {
-    const d = distanceM(lat, lng, loc.lat, loc.lng);
-    if (d < bestDist) { bestDist = d; best = loc; }
+  let bestD = Infinity;
+  for (const l of locs) {
+    const d = distanceM(lat, lng, l.lat, l.lng);
+    if (d < bestD) { bestD = d; best = l; }
   }
-  // Within 300m → use that label; otherwise show coordinates
-  if (best && bestDist < 300) return best.label;
-  return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  return best && bestD < 300 ? best.label : `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 }
 
 export default function Home() {
-  const [locations, setLocations] = useState<Location[]>(SAMPLE_LOCATIONS);
-  const [settings, setSettings] = useState<HeatmapSettings>({
-    radius: 30, intensity: 1.5, opacity: 0.85, colorScheme: "fire",
-  });
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [streetView, setStreetView] = useState<StreetViewLocation | null>(null);
+  const [locations,    setLocations]    = useState<Location[]>(SAMPLE_LOCATIONS);
+  const [settings,     setSettings]     = useState<HeatmapSettings>({ radius: 30, intensity: 1.5, opacity: 0.85, colorScheme: "fire" });
+  const [theme,        setTheme]        = useState<Theme>("dark");
+  const [sidebarOpen,  setSidebarOpen]  = useState(true);
+  const [pending,      setPending]      = useState<{ lat: number; lng: number } | null>(null);
+  const [streetView,   setStreetView]   = useState<StreetViewLocation | null>(null);
 
-  /* Apply dark/light class to <html> for Tailwind dark: variants */
+  // Sync dark/light class on <html>
   useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle("dark", theme === "dark");
-    root.classList.toggle("light", theme === "light");
+    document.documentElement.classList.toggle("dark",  theme === "dark");
+    document.documentElement.classList.toggle("light", theme === "light");
   }, [theme]);
 
-  const handleToggleTheme = useCallback(() => setTheme(t => t === "dark" ? "light" : "dark"), []);
+  const toggleTheme      = useCallback(() => setTheme(t => t === "dark" ? "light" : "dark"), []);
+  const closeStreetView  = useCallback(() => setStreetView(null), []);
 
-  const handleAddLocation = useCallback((loc: Omit<Location, "id">) => {
-    setLocations(prev => [...prev, { ...loc, id: `u${nextId++}` }]);
+  const handleAddLocation    = useCallback((loc: Omit<Location, "id">) => {
+    setLocations(p => [...p, { ...loc, id: `u${nextId++}` }]);
   }, []);
-
   const handleRemoveLocation = useCallback((id: string) => {
-    setLocations(prev => prev.filter(l => l.id !== id));
+    setLocations(p => p.filter(l => l.id !== id));
   }, []);
 
-  /* General map click: fill add-form + open street view */
+  // General map click → fill form + open street view
   const handleMapClick = useCallback((lat: number, lng: number) => {
-    setPendingCoords({ lat, lng });
+    setPending({ lat, lng });
     setSidebarOpen(true);
-    setStreetView({
-      lat, lng,
-      label: nearestLabel(lat, lng, locations),
-    });
+    setStreetView({ lat, lng, label: nearestLabel(lat, lng, locations) });
   }, [locations]);
 
-  /* Dot click: open street view with known label (no form fill) */
+  // Dot click → open street view with known label
   const handleLocationClick = useCallback((lat: number, lng: number, label: string) => {
     setStreetView({ lat, lng, label });
   }, []);
 
-  const mapContainerCls = theme === "light" ? "light" : "";
+  const inStreetView = streetView !== null;
 
   return (
     <div className={`relative w-screen h-screen overflow-hidden ${theme === "dark" ? "bg-[#06091a]" : "bg-slate-200"}`}>
 
-      {/* Map */}
-      <div className={`absolute inset-0 ${mapContainerCls}`}>
+      {/* ── Heatmap (always mounted, fades when street view is active) ── */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-500 ${theme === "light" ? "light" : ""} ${
+          inStreetView ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+      >
         <HeatmapMap
           locations={locations}
           settings={settings}
@@ -109,38 +104,55 @@ export default function Home() {
         />
       </div>
 
-      {/* Header */}
-      <Header
-        locations={locations}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
-        onClearAll={() => setLocations([])}
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={() => setSidebarOpen(v => !v)}
-      />
+      {/* ── Regular UI (header / sidebar / legend) ── */}
+      <div className={`transition-opacity duration-300 ${inStreetView ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+        <Header
+          locations={locations}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onClearAll={() => setLocations([])}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen(v => !v)}
+        />
+        <Sidebar
+          locations={locations}
+          settings={settings}
+          isOpen={sidebarOpen}
+          theme={theme}
+          pendingCoords={pending}
+          onAddLocation={handleAddLocation}
+          onRemoveLocation={handleRemoveLocation}
+          onUpdateSettings={setSettings}
+          onClearPending={() => setPending(null)}
+        />
+        <Legend colorScheme={settings.colorScheme} theme={theme} />
+      </div>
 
-      {/* Sidebar */}
-      <Sidebar
-        locations={locations}
-        settings={settings}
-        isOpen={sidebarOpen}
-        theme={theme}
-        pendingCoords={pendingCoords}
-        onAddLocation={handleAddLocation}
-        onRemoveLocation={handleRemoveLocation}
-        onUpdateSettings={setSettings}
-        onClearPending={() => setPendingCoords(null)}
-      />
+      {/* ── Street View mode ── */}
+      {inStreetView && streetView && (
+        <div className="absolute inset-0 z-10">
+          {/* Full-screen panorama */}
+          <StreetViewScene lat={streetView.lat} lng={streetView.lng} theme={theme} />
 
-      {/* Legend */}
-      <Legend colorScheme={settings.colorScheme} theme={theme} />
+          {/* Top header overlay */}
+          <StreetViewHeader
+            location={streetView}
+            theme={theme}
+            onClose={closeStreetView}
+            onToggleTheme={toggleTheme}
+          />
 
-      {/* Street View panel */}
-      <StreetViewPanel
-        location={streetView}
-        theme={theme}
-        onClose={() => setStreetView(null)}
-      />
+          {/* Mini heatmap in bottom-right corner */}
+          <MiniMap
+            locations={locations}
+            settings={settings}
+            theme={theme}
+            focusLat={streetView.lat}
+            focusLng={streetView.lng}
+            onExpand={closeStreetView}
+          />
+        </div>
+      )}
     </div>
   );
 }

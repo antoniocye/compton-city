@@ -1,5 +1,11 @@
 export type Theme = "dark" | "light";
 
+export interface StreetViewLocation {
+  lat: number;
+  lng: number;
+  label: string;
+}
+
 export interface Location {
   id: string;
   lat: number;
