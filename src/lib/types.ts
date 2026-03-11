@@ -1,3 +1,5 @@
+export type Theme = "dark" | "light";
+
 export interface Location {
   id: string;
   lat: number;

@@ -1,8 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useCallback } from "react";
-import { Location, HeatmapSettings } from "@/lib/types";
+import { useState, useCallback, useEffect } from "react";
+import { Location, HeatmapSettings, Theme } from "@/lib/types";
 import { SAMPLE_LOCATIONS } from "@/lib/sampleData";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
@@ -17,9 +17,7 @@ const HeatmapMap = dynamic(() => import("@/components/HeatmapMap"), {
           <div className="absolute inset-0 rounded-full border-2 border-cyan-500/20" />
           <div className="absolute inset-0 rounded-full border-2 border-t-cyan-400 animate-spin" />
         </div>
-        <p className="text-white/40 text-sm tracking-widest uppercase">
-          Loading map…
-        </p>
+        <p className="text-white/40 text-sm tracking-widest uppercase">Loading map…</p>
       </div>
     </div>
   ),
@@ -35,11 +33,23 @@ export default function Home() {
     opacity: 0.85,
     colorScheme: "fire",
   });
+  const [theme, setTheme] = useState<Theme>("dark");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [pendingCoords, setPendingCoords] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
+  const [pendingCoords, setPendingCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Sync theme class on <html> for Tailwind dark: variants
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [theme]);
+
+  const handleToggleTheme = useCallback(() => {
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  }, []);
 
   const handleAddLocation = useCallback((loc: Omit<Location, "id">) => {
     setLocations((prev) => [...prev, { ...loc, id: `u${nextId++}` }]);
@@ -58,13 +68,16 @@ export default function Home() {
     setSidebarOpen(true);
   }, []);
 
+  const bgCls = theme === "dark" ? "bg-[#0a0a0f]" : "bg-gray-100";
+
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#0a0a0f]">
+    <div className={`relative w-screen h-screen overflow-hidden transition-colors duration-300 ${bgCls}`}>
       {/* Full-screen map */}
       <div className="absolute inset-0">
         <HeatmapMap
           locations={locations}
           settings={settings}
+          theme={theme}
           onMapClick={handleMapClick}
         />
       </div>
@@ -72,8 +85,9 @@ export default function Home() {
       {/* Header */}
       <Header
         locations={locations}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
         onClearAll={handleClearAll}
-        onResetView={() => {}}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((v) => !v)}
       />
@@ -83,6 +97,7 @@ export default function Home() {
         locations={locations}
         settings={settings}
         isOpen={sidebarOpen}
+        theme={theme}
         pendingCoords={pendingCoords}
         onAddLocation={handleAddLocation}
         onRemoveLocation={handleRemoveLocation}
@@ -91,7 +106,7 @@ export default function Home() {
       />
 
       {/* Legend */}
-      <Legend colorScheme={settings.colorScheme} />
+      <Legend colorScheme={settings.colorScheme} theme={theme} />
     </div>
   );
 }

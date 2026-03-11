@@ -119,17 +119,11 @@ body {
   border-radius: 99px;
 }
 
-/* ── Input field ── */
+/* ── Input field base (theme colours applied via Tailwind classes in JSX) ── */
 @layer components {
-  .input-field {
-    @apply bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 outline-none transition-all duration-200;
-    @apply focus:border-cyan-500/50 focus:bg-white/10 focus:ring-1 focus:ring-cyan-500/20;
-  }
-
-  .btn-primary {
-    @apply flex items-center justify-center gap-2 bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-semibold rounded-xl px-4 py-2.5 text-sm;
-    @apply hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-cyan-200 transition-all duration-200;
-    @apply active:scale-[0.98];
+  .input-field-base {
+    @apply border rounded-xl px-3 py-2 text-sm outline-none transition-all duration-200;
+    @apply focus:ring-1 focus:ring-sky-400/30;
   }
 }
 

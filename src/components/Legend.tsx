@@ -1,6 +1,6 @@
 "use client";
 
-import { HeatmapSettings } from "@/lib/types";
+import { HeatmapSettings, Theme } from "@/lib/types";
 
 const GRADIENT_STYLES: Record<HeatmapSettings["colorScheme"], string> = {
   fire: "linear-gradient(to right, #1e0550, #8b0000, #ff6400, #ffd700, #fffde0)",
@@ -11,21 +11,30 @@ const GRADIENT_STYLES: Record<HeatmapSettings["colorScheme"], string> = {
 
 interface LegendProps {
   colorScheme: HeatmapSettings["colorScheme"];
+  theme: Theme;
 }
 
-export default function Legend({ colorScheme }: LegendProps) {
+export default function Legend({ colorScheme, theme }: LegendProps) {
+  const isDark = theme === "dark";
+  const panelCls = isDark
+    ? "bg-black/65 border-white/10"
+    : "bg-white/85 border-black/8 shadow-md";
+  const labelCls = isDark ? "text-white/40" : "text-gray-400";
+
   return (
-    <div className="absolute bottom-8 right-4 z-10 bg-black/65 border border-white/10 backdrop-blur-xl rounded-2xl px-4 py-3 shadow-xl shadow-black/40">
-      <p className="text-[10px] text-white/40 uppercase tracking-widest mb-2">
+    <div
+      className={`absolute bottom-8 right-4 z-10 border backdrop-blur-xl rounded-2xl px-4 py-3 ${panelCls}`}
+    >
+      <p className={`text-[10px] uppercase tracking-widest mb-2 ${labelCls}`}>
         Density
       </p>
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-white/30">Low</span>
+        <span className={`text-[10px] ${labelCls}`}>Low</span>
         <div
           className="w-28 h-2.5 rounded-full"
           style={{ background: GRADIENT_STYLES[colorScheme] }}
         />
-        <span className="text-[10px] text-white/30">High</span>
+        <span className={`text-[10px] ${labelCls}`}>High</span>
       </div>
     </div>
   );

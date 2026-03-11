@@ -3,11 +3,17 @@
 import { useEffect, useRef, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Location, HeatmapSettings, COLOR_SCHEMES } from "@/lib/types";
+import { Location, HeatmapSettings, COLOR_SCHEMES, Theme } from "@/lib/types";
+import {
+  COMPTON_MASK_GEOJSON,
+  COMPTON_BORDER_GEOJSON,
+  COMPTON_BOUNDS,
+} from "@/lib/comptonBoundary";
 
 interface HeatmapMapProps {
   locations: Location[];
   settings: HeatmapSettings;
+  theme: Theme;
   onMapClick?: (lat: number, lng: number) => void;
 }
 
@@ -25,7 +31,7 @@ function buildHeatmapColorExpr(
 
 function locationsToGeoJSON(
   locations: Location[]
-): maplibregl.GeoJSONSourceSpecification["data"] {
+): GeoJSON.FeatureCollection {
   return {
     type: "FeatureCollection",
     features: locations.map((loc) => ({
@@ -36,19 +42,36 @@ function locationsToGeoJSON(
   };
 }
 
+const MASK_COLORS: Record<Theme, string> = {
+  dark: "rgba(4, 4, 14, 1)",
+  light: "rgba(210, 218, 228, 1)",
+};
+const MASK_OPACITY: Record<Theme, number> = {
+  dark: 0.62,
+  light: 0.6,
+};
+const BORDER_COLORS: Record<Theme, { glow: string; line: string }> = {
+  dark: { glow: "rgba(6, 182, 212, 0.35)", line: "rgba(6, 182, 212, 0.9)" },
+  light: { glow: "rgba(2, 132, 199, 0.25)", line: "rgba(2, 100, 180, 0.85)" },
+};
+
 export default function HeatmapMap({
   locations,
   settings,
+  theme,
   onMapClick,
 }: HeatmapMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const isLoadedRef = useRef(false);
+
+  // Always-fresh refs for closure safety
   const locationsRef = useRef(locations);
   const settingsRef = useRef(settings);
-
+  const themeRef = useRef(theme);
   locationsRef.current = locations;
   settingsRef.current = settings;
+  themeRef.current = theme;
 
   const applyHeatmapPaint = useCallback(
     (map: maplibregl.Map, s: HeatmapSettings) => {
@@ -60,20 +83,12 @@ export default function HeatmapMap({
       );
       map.setPaintProperty("heatmap-layer", "heatmap-opacity", s.opacity);
       map.setPaintProperty("heatmap-layer", "heatmap-radius", [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        0, 2,
-        13, s.radius * 0.6,
-        16, s.radius * 1.4,
+        "interpolate", ["linear"], ["zoom"],
+        0, 2, 13, s.radius * 0.6, 16, s.radius * 1.4,
       ]);
       map.setPaintProperty("heatmap-layer", "heatmap-intensity", [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        0, 0.5,
-        13, s.intensity,
-        16, s.intensity * 1.5,
+        "interpolate", ["linear"], ["zoom"],
+        0, 0.5, 13, s.intensity, 16, s.intensity * 1.5,
       ]);
     },
     []
@@ -83,16 +98,24 @@ export default function HeatmapMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    const t = themeRef.current;
+
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: {
         version: 8,
+        glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
         sources: {
-          "carto-dark": {
+          "tiles-dark": {
             type: "raster",
-            tiles: [
-              "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-            ],
+            tiles: ["https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"],
+            tileSize: 256,
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          },
+          "tiles-light": {
+            type: "raster",
+            tiles: ["https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"],
             tileSize: 256,
             attribution:
               '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -100,17 +123,22 @@ export default function HeatmapMap({
         },
         layers: [
           {
-            id: "carto-dark-layer",
+            id: "layer-tiles-dark",
             type: "raster",
-            source: "carto-dark",
-            minzoom: 0,
-            maxzoom: 22,
+            source: "tiles-dark",
+            layout: { visibility: t === "dark" ? "visible" : "none" },
+          },
+          {
+            id: "layer-tiles-light",
+            type: "raster",
+            source: "tiles-light",
+            layout: { visibility: t === "light" ? "visible" : "none" },
           },
         ],
       },
       center: [-118.2201, 33.8958],
-      zoom: 12.5,
-      minZoom: 10,
+      zoom: 13,
+      minZoom: 9,
       maxZoom: 18,
     });
 
@@ -121,13 +149,55 @@ export default function HeatmapMap({
 
     map.on("load", () => {
       isLoadedRef.current = true;
+      const currentTheme = themeRef.current;
+      const s = settingsRef.current;
 
+      // ── Compton mask (world minus Compton) ──────────────────────────────
+      map.addSource("compton-mask-source", {
+        type: "geojson",
+        data: COMPTON_MASK_GEOJSON,
+      });
+      map.addLayer({
+        id: "compton-mask",
+        type: "fill",
+        source: "compton-mask-source",
+        paint: {
+          "fill-color": MASK_COLORS[currentTheme],
+          "fill-opacity": MASK_OPACITY[currentTheme],
+        },
+      });
+
+      // ── Compton border glow ────────────────────────────────────────────
+      map.addSource("compton-border-source", {
+        type: "geojson",
+        data: COMPTON_BORDER_GEOJSON,
+      });
+      map.addLayer({
+        id: "compton-border-glow",
+        type: "line",
+        source: "compton-border-source",
+        paint: {
+          "line-color": BORDER_COLORS[currentTheme].glow,
+          "line-width": 8,
+          "line-blur": 6,
+        },
+      });
+      map.addLayer({
+        id: "compton-border-line",
+        type: "line",
+        source: "compton-border-source",
+        paint: {
+          "line-color": BORDER_COLORS[currentTheme].line,
+          "line-width": 1.5,
+          "line-dasharray": [5, 3],
+        },
+      });
+
+      // ── Heatmap source ─────────────────────────────────────────────────
       map.addSource("locations-source", {
         type: "geojson",
         data: locationsToGeoJSON(locationsRef.current),
       });
-
-      const s = settingsRef.current;
 
       map.addLayer({
         id: "heatmap-layer",
@@ -135,34 +205,22 @@ export default function HeatmapMap({
         source: "locations-source",
         paint: {
           "heatmap-weight": [
-            "interpolate",
-            ["linear"],
-            ["get", "weight"],
-            0, 0,
-            1, 1,
+            "interpolate", ["linear"], ["get", "weight"], 0, 0, 1, 1,
           ],
           "heatmap-intensity": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            0, 0.5,
-            13, s.intensity,
-            16, s.intensity * 1.5,
+            "interpolate", ["linear"], ["zoom"],
+            0, 0.5, 13, s.intensity, 16, s.intensity * 1.5,
           ],
           "heatmap-color": buildHeatmapColorExpr(s.colorScheme),
           "heatmap-radius": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            0, 2,
-            13, s.radius * 0.6,
-            16, s.radius * 1.4,
+            "interpolate", ["linear"], ["zoom"],
+            0, 2, 13, s.radius * 0.6, 16, s.radius * 1.4,
           ],
           "heatmap-opacity": s.opacity,
         },
       });
 
-      // Individual dot layer at high zoom
+      // ── Dot layer at high zoom ─────────────────────────────────────────
       map.addLayer({
         id: "dot-layer",
         type: "circle",
@@ -170,26 +228,18 @@ export default function HeatmapMap({
         minzoom: 14,
         paint: {
           "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            14, 3,
-            18, 12,
+            "interpolate", ["linear"], ["zoom"], 14, 3, 18, 12,
           ],
-          "circle-color": "#fff",
+          "circle-color": "#ffffff",
           "circle-opacity": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            14, 0,
-            15.5, 0.85,
+            "interpolate", ["linear"], ["zoom"], 14, 0, 15.5, 0.85,
           ],
           "circle-stroke-color": "#06b6d4",
           "circle-stroke-width": 1.5,
         },
       });
 
-      // Tooltip on hover
+      // ── Tooltip ────────────────────────────────────────────────────────
       const tooltip = new maplibregl.Popup({
         closeButton: false,
         closeOnClick: false,
@@ -198,11 +248,9 @@ export default function HeatmapMap({
 
       map.on("mouseenter", "dot-layer", (e) => {
         map.getCanvas().style.cursor = "pointer";
-        if (e.features && e.features[0]) {
+        if (e.features?.[0]) {
           const props = e.features[0].properties;
-          const coords = (
-            e.features[0].geometry as GeoJSON.Point
-          ).coordinates;
+          const coords = (e.features[0].geometry as GeoJSON.Point).coordinates;
           tooltip
             .setLngLat([coords[0], coords[1]])
             .setHTML(
@@ -211,25 +259,24 @@ export default function HeatmapMap({
             .addTo(map);
         }
       });
-
       map.on("mouseleave", "dot-layer", () => {
         map.getCanvas().style.cursor = "";
         tooltip.remove();
       });
+
+      // ── Fit to Compton on first load ───────────────────────────────────
+      map.fitBounds(COMPTON_BOUNDS, { padding: 10, duration: 900 });
     });
 
-    // Click handler
+    // Click to add location
     map.on("click", (e) => {
-      if (onMapClick) {
-        onMapClick(
-          parseFloat(e.lngLat.lat.toFixed(6)),
-          parseFloat(e.lngLat.lng.toFixed(6))
-        );
-      }
+      onMapClick?.(
+        parseFloat(e.lngLat.lat.toFixed(6)),
+        parseFloat(e.lngLat.lng.toFixed(6))
+      );
     });
 
     mapRef.current = map;
-
     return () => {
       isLoadedRef.current = false;
       map.remove();
@@ -238,26 +285,55 @@ export default function HeatmapMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync locations
+  // ── Sync locations ──────────────────────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isLoadedRef.current) return;
-    const source = map.getSource(
-      "locations-source"
-    ) as maplibregl.GeoJSONSource;
-    if (source) {
-      source.setData(locationsToGeoJSON(locations) as GeoJSON.FeatureCollection);
-    }
+    (map.getSource("locations-source") as maplibregl.GeoJSONSource)?.setData(
+      locationsToGeoJSON(locations)
+    );
   }, [locations]);
 
-  // Sync settings
+  // ── Sync heatmap settings ───────────────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isLoadedRef.current) return;
     applyHeatmapPaint(map, settings);
   }, [settings, applyHeatmapPaint]);
 
-  return (
-    <div ref={containerRef} className="w-full h-full" />
-  );
+  // ── Sync theme ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isLoadedRef.current) return;
+
+    // Toggle tile layers
+    map.setLayoutProperty(
+      "layer-tiles-dark",
+      "visibility",
+      theme === "dark" ? "visible" : "none"
+    );
+    map.setLayoutProperty(
+      "layer-tiles-light",
+      "visibility",
+      theme === "light" ? "visible" : "none"
+    );
+
+    // Update mask
+    map.setPaintProperty("compton-mask", "fill-color", MASK_COLORS[theme]);
+    map.setPaintProperty("compton-mask", "fill-opacity", MASK_OPACITY[theme]);
+
+    // Update border
+    map.setPaintProperty(
+      "compton-border-glow",
+      "line-color",
+      BORDER_COLORS[theme].glow
+    );
+    map.setPaintProperty(
+      "compton-border-line",
+      "line-color",
+      BORDER_COLORS[theme].line
+    );
+  }, [theme]);
+
+  return <div ref={containerRef} className="w-full h-full" />;
 }
