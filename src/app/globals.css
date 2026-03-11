@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Reset ── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a0f;
+}
+
+/* ── MapLibre overrides ── */
+.maplibregl-canvas {
+  outline: none;
+}
+
+.maplibregl-ctrl-bottom-right {
+  bottom: 4rem !important;
+  right: 1rem !important;
+}
+
+.maplibregl-ctrl-bottom-left {
+  display: none;
+}
+
+.maplibregl-ctrl-attrib {
+  font-size: 9px !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  border-radius: 6px !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.maplibregl-ctrl-group {
+  background: rgba(10, 10, 20, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(12px);
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.maplibregl-ctrl-group button {
+  background-color: transparent !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  width: 34px !important;
+  height: 34px !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.maplibregl-ctrl-icon {
+  filter: invert(1) opacity(0.6);
+}
+
+/* ── Tooltip ── */
+.heatmap-tooltip .maplibregl-popup-content {
+  background: rgba(10, 10, 20, 0.92) !important;
+  border: 1px solid rgba(6, 182, 212, 0.3) !important;
+  border-radius: 10px !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(16px);
+}
+
+.heatmap-tooltip .maplibregl-popup-tip {
+  border-top-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+.tooltip-content {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  gap: 2px;
+}
+
+.tooltip-content strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tooltip-content span {
+  font-size: 10px;
+  color: rgba(6, 182, 212, 0.7);
+  font-family: monospace;
+}
+
+/* ── Custom scrollbar ── */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+}
+
+/* ── Input field ── */
+@layer components {
+  .input-field {
+    @apply bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 outline-none transition-all duration-200;
+    @apply focus:border-cyan-500/50 focus:bg-white/10 focus:ring-1 focus:ring-cyan-500/20;
+  }
+
+  .btn-primary {
+    @apply flex items-center justify-center gap-2 bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-semibold rounded-xl px-4 py-2.5 text-sm;
+    @apply hover:bg-cyan-500/25 hover:border-cyan-400/60 hover:text-cyan-200 transition-all duration-200;
+    @apply active:scale-[0.98];
+  }
+}
+
+/* ── Range slider ── */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #06b6d4;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.8);
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #06b6d4;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+}
