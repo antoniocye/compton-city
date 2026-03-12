@@ -21,6 +21,9 @@ type SceneState = "loading" | "ready" | "no-coverage" | "no-key" | "auth-error" 
 interface Props {
   lat: number;
   lng: number;
+  /** Initial camera heading (degrees). Passed when teleporting to a pin so the
+   *  panorama opens facing back toward the previous location. */
+  heading?: number;
   theme: Theme;
   locations: Location[];
   showPins: boolean;
@@ -167,28 +170,17 @@ class StreetViewPin {
           return;
         }
 
-        // ── Ground-sinking / pitch-aware horizon clamp ───────────
-        // Ground-level coords project toward the horizon for distant objects.
-        // The horizon Y changes with camera pitch:
-        //   pitch = 0  (level)  → horizon ≈ h * 0.50
-        //   pitch > 0  (up)     → horizon moves DOWN  (larger Y)
-        //   pitch < 0  (down)   → horizon moves UP    (smaller Y)
-        // vFOV ≈ 90° / 2^zoom  (Street View default: zoom=0 → ~90°)
-        // horizonY_px = h * (0.5 + pitch_deg / vFOV_deg)
-        //
-        // For pins > 20 m away we clamp the anchor to stay just ABOVE the
-        // dynamic horizon so they look like distant objects on the skyline
-        // instead of sinking into the road — and they move correctly as
-        // the user tilts the camera up or down.
-        const svPano = this.getMap() as google.maps.StreetViewPanorama;
-        const pitch  = svPano?.getPov()?.pitch  ?? 0; // °, positive = up
-        const svZoom = svPano?.getZoom()        ?? 0; // panorama zoom level
-        const vFOV   = 90 / Math.pow(2, svZoom);      // approx. vertical FOV °
-        const dynHorizonY = h * (0.5 + pitch / vFOV);
-        const clampY  = dynHorizonY - 18;         // 18 px above the horizon line
-        const anchorY = (dist > 20 && px.y > clampY)
-          ? Math.max(0, Math.min(clampY, h * 0.96))
-          : px.y;
+        // ── Ground-level hide (no dynamic pitch math → no wobble) ──
+        // fromLatLngToContainerPixel gives the physically correct 3D position.
+        // We simply hide distant pins that project into the lower ~32% of the
+        // frame (road surface when looking level). The raw projected Y is used
+        // as-is — no clamping, no horizon tracking — so pins don't move as
+        // the user tilts the camera up/down beyond what 3D projection dictates.
+        if (dist > 20 && px.y > h * 0.68) {
+          el.style.visibility = "hidden";
+          return;
+        }
+        const anchorY = px.y;
 
         // ── Position + scale + opacity ────────────────────────────
         el.style.visibility = "visible";
@@ -214,7 +206,7 @@ class StreetViewPin {
 }
 
 /* ── Main component ────────────────────────────────────────────────── */
-export default function StreetViewScene({ lat, lng, theme, locations, showPins, onPinClick }: Props) {
+export default function StreetViewScene({ lat, lng, heading, theme, locations, showPins, onPinClick }: Props) {
   const containerRef  = useRef<HTMLDivElement>(null);
   const panoramaRef   = useRef<google.maps.StreetViewPanorama | null>(null);
   const pinsRef       = useRef<StreetViewPin[]>([]);
@@ -243,9 +235,9 @@ export default function StreetViewScene({ lat, lng, theme, locations, showPins, 
             if (fallback) { tryRadius(fallback); return; }
             setState("no-coverage"); return;
           }
-          const pano = new StreetViewPanorama(containerRef.current!, {
+          const pano =           new StreetViewPanorama(containerRef.current!, {
             position:              data!.location!.latLng!,
-            pov:                   { heading: 0, pitch: 0 },
+            pov:                   { heading: heading ?? 0, pitch: 0 },
             zoom:                  0,
             addressControl:        false,
             fullscreenControl:     false,

@@ -38,6 +38,22 @@ function distanceM(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/**
+ * Bearing (0–360°) from point A to point B.
+ * Use to face the panorama back toward the previous location after teleport.
+ */
+function computeHeading(
+  fromLat: number, fromLng: number,
+  toLat: number,  toLng: number
+): number {
+  const dLng = ((toLng - fromLng) * Math.PI) / 180;
+  const φ1   = (fromLat * Math.PI) / 180;
+  const φ2   = (toLat   * Math.PI) / 180;
+  const y    = Math.sin(dLng) * Math.cos(φ2);
+  const x    = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(dLng);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
 /** Returns the closest Location in the list to (lat, lng) */
 function findNearest(lat: number, lng: number, locs: Location[]): Location | null {
   if (!locs.length) return null;
@@ -102,10 +118,13 @@ export default function Home() {
     }
   }, [locations]);
 
-  // Pin click in Street View → jump to that pin's exact location
+  // Pin click → jump to pin's location, face back toward where we just were
   const handlePinClick = useCallback((lat: number, lng: number, label: string) => {
-    setStreetView({ lat, lng, label });
-  }, []);
+    const heading = streetView
+      ? computeHeading(lat, lng, streetView.lat, streetView.lng)
+      : 0;
+    setStreetView({ lat, lng, label, heading });
+  }, [streetView]);
 
   const inStreetView = streetView !== null;
 
@@ -158,6 +177,7 @@ export default function Home() {
           <StreetViewScene
             lat={streetView.lat}
             lng={streetView.lng}
+            heading={streetView.heading}
             theme={theme}
             locations={locations}
             showPins={showPins}

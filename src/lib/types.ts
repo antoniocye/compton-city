@@ -4,6 +4,9 @@ export interface StreetViewLocation {
   lat: number;
   lng: number;
   label: string;
+  /** Initial camera heading (degrees, 0 = north). Set when teleporting so the
+   *  panorama opens facing back toward the location you came from. */
+  heading?: number;
 }
 
 export interface Location {
