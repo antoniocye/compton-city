@@ -1,12 +1,6 @@
 /**
  * Compton, CA — OSM relation 112057.
- * Uniformly downsampled then self-intersections iteratively resolved by
- * removing the vertex involved in the most crossing pairs each pass.
  * 29 vertices, zero self-intersections verified.
- *
- * Extent: N 33.92073  S 33.85651
- *         E -118.19020  W -118.27263
- *
  * Winds CLOCKWISE (GeoJSON polygon hole convention).
  */
 export const COMPTON_BOUNDARY_CW: [number, number][] = [

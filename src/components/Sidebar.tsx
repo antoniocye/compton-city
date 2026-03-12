@@ -14,11 +14,9 @@ interface SidebarProps {
   isOpen: boolean;
   theme: Theme;
   autoplay: boolean;
-  ambientOn: boolean;
   onToggleType: (type: ArtifactType) => void;
   onUpdateSettings: (s: HeatmapSettings) => void;
   onToggleAutoplay: () => void;
-  onToggleAmbient: () => void;
 }
 
 const SCHEMES: Record<HeatmapSettings["colorScheme"], { label: string; gradient: string }> = {
@@ -77,8 +75,8 @@ function Slider({ label, value, min, max, step, display, isDark, onChange }: {
 
 export default function Sidebar({
   settings, activeTypes, isOpen, theme,
-  autoplay, ambientOn,
-  onToggleType, onUpdateSettings, onToggleAutoplay, onToggleAmbient,
+  autoplay,
+  onToggleType, onUpdateSettings, onToggleAutoplay,
 }: SidebarProps) {
   const isDark = theme === "dark";
   const div = isDark ? "border-zinc-800" : "border-zinc-100";
@@ -177,8 +175,7 @@ export default function Sidebar({
               <p className={`text-[10px] uppercase tracking-widest font-bold ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
                 Playback
               </p>
-              <Toggle label="Autoplay media" description="Play on location select" on={autoplay} isDark={isDark} onToggle={onToggleAutoplay} />
-              <Toggle label="Ambient music" description="Compton — Dr. Dre × Kendrick" on={ambientOn} isDark={isDark} onToggle={onToggleAmbient} />
+              <Toggle label="Autoplay media" description="Auto-play on location select" on={autoplay} isDark={isDark} onToggle={onToggleAutoplay} />
             </div>
           </div>
 

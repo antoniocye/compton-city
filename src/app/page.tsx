@@ -18,7 +18,6 @@ import Legend from "@/components/Legend";
 import StreetViewHeader from "@/components/StreetViewHeader";
 import MiniMap from "@/components/MiniMap";
 import ArtifactPanel from "@/components/ArtifactPanel";
-import AmbientPlayer from "@/components/AmbientPlayer";
 
 const HeatmapMap = dynamic(() => import("@/components/HeatmapMap"), {
   ssr: false,
@@ -95,16 +94,14 @@ export default function Home() {
   // overwrite already-stored values.
   const [settings, setSettings] = useState<HeatmapSettings>(DEFAULT_SETTINGS);
   const [theme,    setTheme]    = useState<Theme>("dark");
-  const [autoplay, setAutoplay] = useState(false);
-  const [ambientOn, setAmbientOn] = useState(false);
+  const [autoplay, setAutoplay] = useState(true);
   const persistReady = useRef(false);
 
   // Load from localStorage once after hydration
   useEffect(() => {
     setSettings(lsGet("compton-settings", DEFAULT_SETTINGS));
     setTheme(lsGet<Theme>("compton-theme", "dark"));
-    setAutoplay(lsGet("compton-autoplay", false));
-    setAmbientOn(lsGet("compton-ambient", false));
+    setAutoplay(lsGet("compton-autoplay", true));
     persistReady.current = true;
   }, []);
 
@@ -112,7 +109,6 @@ export default function Home() {
   useEffect(() => { if (persistReady.current) lsSet("compton-settings", settings); }, [settings]);
   useEffect(() => { if (persistReady.current) lsSet("compton-theme",    theme);    }, [theme]);
   useEffect(() => { if (persistReady.current) lsSet("compton-autoplay", autoplay); }, [autoplay]);
-  useEffect(() => { if (persistReady.current) lsSet("compton-ambient",  ambientOn);}, [ambientOn]);
 
   // ── Ephemeral state ───────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen]       = useState(false);
@@ -236,17 +232,12 @@ export default function Home() {
         />
         <Sidebar
           settings={settings} activeTypes={activeTypes} isOpen={sidebarOpen}
-          theme={theme} autoplay={autoplay} ambientOn={ambientOn}
+          theme={theme} autoplay={autoplay}
           onToggleType={handleToggleType} onUpdateSettings={setSettings}
           onToggleAutoplay={() => setAutoplay((v) => !v)}
-          onToggleAmbient={() => setAmbientOn((v) => !v)}
         />
         <Legend colorScheme={settings.colorScheme} theme={theme} activeTypes={activeTypes} />
 
-        {/* Ambient background player */}
-        {ambientOn && (
-          <AmbientPlayer theme={theme} onClose={() => setAmbientOn(false)} />
-        )}
       </div>
 
       {/* Street View */}
