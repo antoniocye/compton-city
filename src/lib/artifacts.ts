@@ -122,29 +122,29 @@ export function getArtifactLink(resource: ArtifactResource): string | null {
   }
 }
 
-export function getYouTubeEmbedUrl(resource: ArtifactResource) {
+export function getYouTubeEmbedUrl(resource: ArtifactResource, autoplay = false) {
   if (resource.kind !== "youtube") return null;
   const match = resource.url.match(
     /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]{11})/
   );
   if (!match) return null;
-
-  const params = new URLSearchParams({
-    rel: "0",
-    modestbranding: "1",
-  });
+  const params = new URLSearchParams({ rel: "0", modestbranding: "1" });
   if (resource.startSeconds) params.set("start", String(resource.startSeconds));
-  if (resource.endSeconds) params.set("end", String(resource.endSeconds));
+  if (resource.endSeconds)   params.set("end",   String(resource.endSeconds));
+  if (autoplay) params.set("autoplay", "1");
   return `https://www.youtube.com/embed/${match[1]}?${params.toString()}`;
 }
 
-export function getSpotifyEmbedUrl(resource: ArtifactResource) {
+export function getSpotifyEmbedUrl(resource: ArtifactResource, autoplay = false) {
   if (resource.kind !== "spotify") return null;
   try {
     const url = new URL(resource.url);
     const [, kind, id] = url.pathname.split("/");
     if (!kind || !id) return null;
-    return `https://open.spotify.com/embed/${kind}/${id}`;
+    const params = new URLSearchParams();
+    if (autoplay) params.set("autoplay", "1");
+    const qs = params.toString();
+    return `https://open.spotify.com/embed/${kind}/${id}${qs ? `?${qs}` : ""}`;
   } catch {
     return null;
   }

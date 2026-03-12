@@ -18,6 +18,7 @@ import Legend from "@/components/Legend";
 import StreetViewHeader from "@/components/StreetViewHeader";
 import MiniMap from "@/components/MiniMap";
 import ArtifactPanel from "@/components/ArtifactPanel";
+import AmbientPlayer from "@/components/AmbientPlayer";
 
 const HeatmapMap = dynamic(() => import("@/components/HeatmapMap"), {
   ssr: false,
@@ -33,85 +34,90 @@ const HeatmapMap = dynamic(() => import("@/components/HeatmapMap"), {
 
 const StreetViewScene = dynamic(() => import("@/components/StreetViewScene"), { ssr: false });
 
+/* ── localStorage helpers ─────────────────────────────────────────── */
+function lsGet<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const v = localStorage.getItem(key);
+    return v ? (JSON.parse(v) as T) : fallback;
+  } catch { return fallback; }
+}
+function lsSet<T>(key: string, value: T) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
+}
+
+const DEFAULT_SETTINGS: HeatmapSettings = {
+  radius: 30, intensity: 1.5, opacity: 0.85, colorScheme: "fire",
+};
+
+/* ── Geometry helpers ─────────────────────────────────────────────── */
 function distanceM(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6_371_000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/**
- * Bearing (0–360°) from point A to point B.
- * Use to face the panorama back toward the previous location after teleport.
- */
-function computeHeading(
-  fromLat: number, fromLng: number,
-  toLat: number,  toLng: number
-): number {
+function computeHeading(fromLat: number, fromLng: number, toLat: number, toLng: number) {
   const dLng = ((toLng - fromLng) * Math.PI) / 180;
-  const φ1   = (fromLat * Math.PI) / 180;
-  const φ2   = (toLat   * Math.PI) / 180;
-  const y    = Math.sin(dLng) * Math.cos(φ2);
-  const x    = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(dLng);
+  const φ1 = (fromLat * Math.PI) / 180, φ2 = (toLat * Math.PI) / 180;
+  const y = Math.sin(dLng) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(dLng);
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
-/** Returns the closest mapped location summary to (lat, lng) */
-function findNearestSummary(
-  lat: number,
-  lng: number,
-  summaries: LocationSummary[]
-): LocationSummary | null {
+function findNearestSummary(lat: number, lng: number, summaries: LocationSummary[]) {
   if (!summaries.length) return null;
   let best = summaries[0];
-  const bestCenter = getLocationCenter(best.location);
-  let bestD = distanceM(lat, lng, bestCenter.lat, bestCenter.lng);
+  let bestD = distanceM(lat, lng, ...Object.values(getLocationCenter(best.location)) as [number, number]);
   for (let i = 1; i < summaries.length; i++) {
-    const center = getLocationCenter(summaries[i].location);
-    const d = distanceM(lat, lng, center.lat, center.lng);
-    if (d < bestD) {
-      bestD = d;
-      best = summaries[i];
-    }
+    const c = getLocationCenter(summaries[i].location);
+    const d = distanceM(lat, lng, c.lat, c.lng);
+    if (d < bestD) { bestD = d; best = summaries[i]; }
   }
   return best;
 }
 
 function resolveStreetView(summary: LocationSummary, heading?: number): StreetViewLocation {
   const { lat, lng } = getLocationCenter(summary.location);
-  return {
-    locationId: summary.location.id,
-    lat,
-    lng,
-    label: summary.location.name,
-    artifactCount: summary.artifactCount,
-    heading,
-  };
+  return { locationId: summary.location.id, lat, lng, label: summary.location.name, artifactCount: summary.artifactCount, heading };
 }
 
+/* ── Component ────────────────────────────────────────────────────── */
 export default function Home() {
-  const [settings, setSettings] = useState<HeatmapSettings>({
-    radius: 30,
-    intensity: 1.5,
-    opacity: 0.85,
-    colorScheme: "fire",
-  });
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [streetView, setStreetView] = useState<StreetViewLocation | null>(null);
-  const [activeTypes, setActiveTypes] = useState<ArtifactType[]>(ARTIFACT_TYPES);
+  // ── Persisted state ──────────────────────────────────────────────
+  const [settings, setSettings] = useState<HeatmapSettings>(
+    () => lsGet("compton-settings", DEFAULT_SETTINGS)
+  );
+  const [theme, setTheme] = useState<Theme>(
+    () => lsGet<Theme>("compton-theme", "dark")
+  );
+  // User preferences: autoplay artifact media + ambient background music
+  const [autoplay, setAutoplay]       = useState(() => lsGet("compton-autoplay", false));
+  const [ambientOn, setAmbientOn]     = useState(() => lsGet("compton-ambient", false));
+
+  // Persist on change
+  useEffect(() => { lsSet("compton-settings", settings); }, [settings]);
+  useEffect(() => { lsSet("compton-theme", theme); }, [theme]);
+  useEffect(() => { lsSet("compton-autoplay", autoplay); }, [autoplay]);
+  useEffect(() => { lsSet("compton-ambient", ambientOn); }, [ambientOn]);
+
+  // ── Ephemeral state ───────────────────────────────────────────────
+  const [sidebarOpen, setSidebarOpen]       = useState(false);
+  const [streetView, setStreetView]         = useState<StreetViewLocation | null>(null);
+  const [activeTypes, setActiveTypes]       = useState<ArtifactType[]>(ARTIFACT_TYPES);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     SAMPLE_LOCATIONS[0]?.id ?? null
   );
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(
     SAMPLE_ARTIFACTS[0]?.id ?? null
   );
+  const streetViewRef = useRef<StreetViewLocation | null>(null);
 
+  // ── Derived data ──────────────────────────────────────────────────
   const filteredArtifacts = useMemo(
     () => filterArtifactsByTypes(SAMPLE_ARTIFACTS, activeTypes),
     [activeTypes]
@@ -121,116 +127,77 @@ export default function Home() {
     [filteredArtifacts]
   );
   const currentSummary = useMemo(
-    () =>
-      selectedLocationId
-        ? summaries.find((summary) => summary.location.id === selectedLocationId) ?? null
-        : null,
+    () => selectedLocationId
+      ? summaries.find((s) => s.location.id === selectedLocationId) ?? null
+      : null,
     [summaries, selectedLocationId]
   );
-  const streetViewRef = useRef<StreetViewLocation | null>(null);
 
-  // Sync dark/light class on <html>
+  // ── Side effects ──────────────────────────────────────────────────
   useEffect(() => {
     document.documentElement.classList.toggle("dark",  theme === "dark");
     document.documentElement.classList.toggle("light", theme === "light");
   }, [theme]);
 
-  useEffect(() => {
-    streetViewRef.current = streetView;
-  }, [streetView]);
+  useEffect(() => { streetViewRef.current = streetView; }, [streetView]);
 
   useEffect(() => {
     if (!summaries.length) {
-      setSelectedLocationId(null);
-      setSelectedArtifactId(null);
-      return;
+      setSelectedLocationId(null); setSelectedArtifactId(null); return;
     }
-    if (!selectedLocationId) {
-      if (selectedArtifactId) setSelectedArtifactId(null);
-      return;
-    }
-    const summary = summaries.find((entry) => entry.location.id === selectedLocationId);
-    if (!summary) {
+    if (!selectedLocationId) { setSelectedArtifactId(null); return; }
+    const s = summaries.find((e) => e.location.id === selectedLocationId);
+    if (!s) {
       setSelectedLocationId(summaries[0].location.id);
       setSelectedArtifactId(summaries[0].artifacts[0]?.id ?? null);
       return;
     }
-    if (!selectedArtifactId || !summary.artifacts.some((artifact) => artifact.id === selectedArtifactId)) {
-      setSelectedArtifactId(summary.artifacts[0]?.id ?? null);
+    if (!selectedArtifactId || !s.artifacts.some((a) => a.id === selectedArtifactId)) {
+      setSelectedArtifactId(s.artifacts[0]?.id ?? null);
     }
   }, [summaries, selectedLocationId, selectedArtifactId]);
 
-  const toggleTheme = useCallback(
-    () => setTheme((current) => (current === "dark" ? "light" : "dark")),
-    []
-  );
+  // ── Callbacks ─────────────────────────────────────────────────────
+  const toggleTheme    = useCallback(() => setTheme((t) => t === "dark" ? "light" : "dark"), []);
   const closeStreetView = useCallback(() => setStreetView(null), []);
 
-  const selectSummary = useCallback((summary: LocationSummary | null) => {
-    setSelectedLocationId(summary?.location.id ?? null);
-    setSelectedArtifactId(summary?.artifacts[0]?.id ?? null);
+  const selectSummary = useCallback((s: LocationSummary | null) => {
+    setSelectedLocationId(s?.location.id ?? null);
+    setSelectedArtifactId(s?.artifacts[0]?.id ?? null);
   }, []);
 
   const handleToggleType = useCallback((type: ArtifactType) => {
-    setActiveTypes((current) => {
-      if (current.includes(type)) {
-        return current.length === 1 ? current : current.filter((entry) => entry !== type);
-      }
-      return [...current, type];
+    setActiveTypes((cur) => {
+      if (cur.includes(type)) return cur.length === 1 ? cur : cur.filter((t) => t !== type);
+      return [...cur, type];
     });
   }, []);
 
-  // General map click → fill form + snap street view to nearest location
   const handleMapClick = useCallback((lat: number, lng: number) => {
     const nearest = findNearestSummary(lat, lng, summaries);
-    if (nearest) {
-      selectSummary(nearest);
-      setStreetView(resolveStreetView(nearest));
-    } else {
-      setStreetView({ lat, lng, label: `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
-    }
+    if (nearest) { selectSummary(nearest); setStreetView(resolveStreetView(nearest)); }
+    else { setStreetView({ lat, lng, label: `${lat.toFixed(4)}, ${lng.toFixed(4)}` }); }
   }, [selectSummary, summaries]);
 
-  // Dot click → open street view with known label (exact position)
   const handleLocationClick = useCallback((locationId: string) => {
-    const summary = summaries.find((entry) => entry.location.id === locationId);
-    if (!summary) return;
-    selectSummary(summary);
-    setStreetView(resolveStreetView(summary));
+    const s = summaries.find((e) => e.location.id === locationId);
+    if (!s) return;
+    selectSummary(s);
+    setStreetView(resolveStreetView(s));
   }, [selectSummary, summaries]);
 
-  // Mini-map click → snap to nearest location
   const handleTeleport = useCallback((lat: number, lng: number) => {
     const nearest = findNearestSummary(lat, lng, summaries);
-    if (nearest) {
-      selectSummary(nearest);
-      setStreetView(resolveStreetView(nearest));
-    } else {
-      setStreetView({ lat, lng, label: `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
-    }
+    if (nearest) { selectSummary(nearest); setStreetView(resolveStreetView(nearest)); }
+    else { setStreetView({ lat, lng, label: `${lat.toFixed(4)}, ${lng.toFixed(4)}` }); }
   }, [selectSummary, summaries]);
 
-  // Artifact marker click → jump to that location while keeping visual direction consistent
-  const handlePinClick = useCallback((
-    locationId: string,
-    lat: number,
-    lng: number,
-    label: string
-  ) => {
-    const summary = summaries.find((entry) => entry.location.id === locationId) ?? null;
-    if (summary) selectSummary(summary);
-    const currentStreetView = streetViewRef.current;
-    const heading = currentStreetView
-      ? computeHeading(currentStreetView.lat, currentStreetView.lng, lat, lng)
-      : 0;
-    setStreetView({
-      locationId,
-      lat,
-      lng,
-      label,
-      heading,
-      artifactCount: summary?.artifactCount,
-    });
+  const handlePinClick = useCallback((locationId: string, lat: number, lng: number, label: string) => {
+    const s = summaries.find((e) => e.location.id === locationId) ?? null;
+    if (s) selectSummary(s);
+    const cur = streetViewRef.current;
+    const heading = cur ? computeHeading(cur.lat, cur.lng, lat, lng) : 0;
+    setStreetView({ locationId, lat, lng, label, heading, artifactCount: s?.artifactCount });
   }, [selectSummary, summaries]);
 
   const inStreetView = streetView !== null;
@@ -238,22 +205,17 @@ export default function Home() {
   return (
     <div className={`relative w-screen h-screen overflow-hidden ${theme === "dark" ? "bg-zinc-950" : "bg-zinc-100"}`}>
 
-      {/* ── Heatmap (always mounted, fades when street view is active) ── */}
-      <div
-        className={`absolute inset-0 transition-opacity duration-500 ${theme === "light" ? "light" : ""} ${
-          inStreetView ? "opacity-0 pointer-events-none" : "opacity-100"
-        }`}
-        >
+      {/* Heatmap */}
+      <div className={`absolute inset-0 transition-opacity duration-500 ${theme === "light" ? "light" : ""} ${
+        inStreetView ? "opacity-0 pointer-events-none" : "opacity-100"
+      }`}>
         <HeatmapMap
-          summaries={summaries}
-          settings={settings}
-          theme={theme}
-          onMapClick={handleMapClick}
-          onLocationClick={handleLocationClick}
+          summaries={summaries} settings={settings} theme={theme}
+          onMapClick={handleMapClick} onLocationClick={handleLocationClick}
         />
       </div>
 
-      {/* ── Regular UI (header / sidebar / legend) ── */}
+      {/* Regular UI */}
       <div className={`transition-opacity duration-300 ${inStreetView ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
         <Header
           locationCount={summaries.length}
@@ -261,54 +223,43 @@ export default function Home() {
           theme={theme}
           onToggleTheme={toggleTheme}
           sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen(v => !v)}
+          onToggleSidebar={() => setSidebarOpen((v) => !v)}
         />
         <Sidebar
-          settings={settings}
-          activeTypes={activeTypes}
-          isOpen={sidebarOpen}
-          theme={theme}
-          onToggleType={handleToggleType}
-          onUpdateSettings={setSettings}
+          settings={settings} activeTypes={activeTypes} isOpen={sidebarOpen}
+          theme={theme} autoplay={autoplay} ambientOn={ambientOn}
+          onToggleType={handleToggleType} onUpdateSettings={setSettings}
+          onToggleAutoplay={() => setAutoplay((v) => !v)}
+          onToggleAmbient={() => setAmbientOn((v) => !v)}
         />
         <Legend colorScheme={settings.colorScheme} theme={theme} activeTypes={activeTypes} />
+
+        {/* Ambient background player */}
+        {ambientOn && (
+          <AmbientPlayer theme={theme} onClose={() => setAmbientOn(false)} />
+        )}
       </div>
 
-      {/* ── Street View mode ── */}
+      {/* Street View */}
       {inStreetView && streetView && (
         <div className="absolute inset-0 z-10">
-          {/* Full-screen panorama */}
           <StreetViewScene
-            lat={streetView.lat}
-            lng={streetView.lng}
-            theme={theme}
-            summaries={summaries}
-            onPinClick={handlePinClick}
+            lat={streetView.lat} lng={streetView.lng}
+            theme={theme} summaries={summaries} onPinClick={handlePinClick}
           />
-
-          {/* Top header overlay */}
-          <StreetViewHeader
-            theme={theme}
-            onClose={closeStreetView}
-          />
-
+          <StreetViewHeader theme={theme} onClose={closeStreetView} />
           <ArtifactPanel
             summary={currentSummary}
             selectedArtifactId={selectedArtifactId}
             theme={theme}
+            autoplay={autoplay}
             className="absolute bottom-5 left-5 z-20 w-[min(360px,calc(100vw-18rem))] max-h-[min(56vh,520px)]"
-            onSelectArtifact={(artifactId) => setSelectedArtifactId(artifactId)}
+            onSelectArtifact={(id) => setSelectedArtifactId(id)}
           />
-
-          {/* Mini heatmap in bottom-right corner */}
           <MiniMap
-            summaries={summaries}
-            settings={settings}
-            theme={theme}
-            focusLat={streetView.lat}
-            focusLng={streetView.lng}
-            onTeleport={handleTeleport}
-            onExpand={closeStreetView}
+            summaries={summaries} settings={settings} theme={theme}
+            focusLat={streetView.lat} focusLng={streetView.lng}
+            onTeleport={handleTeleport} onExpand={closeStreetView}
           />
         </div>
       )}

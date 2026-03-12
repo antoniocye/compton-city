@@ -229,17 +229,3 @@ export const COLOR_SCHEMES: Record<
   ],
 };
 
-/** Street glow/core colors per scheme — used for the glowing road overlay */
-export const STREET_COLORS: Record<
-  HeatmapSettings["colorScheme"],
-  { glow: string; core: string }
-> = {
-  fire:     { glow: "rgba(220,100,0,",   core: "rgba(255,200,40,"  },
-  ocean:    { glow: "rgba(0,150,200,",   core: "rgba(60,230,210,"  },
-  plasma:   { glow: "rgba(220,30,70,",   core: "rgba(255,120,80,"  },
-  viridis:  { glow: "rgba(40,170,60,",   core: "rgba(190,235,30,"  },
-  ember:    { glow: "rgba(190,80,0,",    core: "rgba(255,185,30,"  },
-  arctic:   { glow: "rgba(0,120,220,",   core: "rgba(80,210,255,"  },
-  crimson:  { glow: "rgba(190,0,10,",    core: "rgba(255,70,70,"   },
-  infrared: { glow: "rgba(50,180,20,",   core: "rgba(210,245,0,"   },
-};

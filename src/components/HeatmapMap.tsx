@@ -7,7 +7,6 @@ import {
   ARTIFACT_TYPE_META,
   HeatmapSettings,
   COLOR_SCHEMES,
-  STREET_COLORS,
   Theme,
   LocationSummary,
 } from "@/lib/types";
@@ -113,28 +112,33 @@ function toStreetsGeoJSON(
   return { type: "FeatureCollection", features };
 }
 
+/**
+ * Maps street weight [0→1] through the scheme's mid-to-high color range,
+ * so streets are color-coded by heat intensity just like the heatmap.
+ * Core uses stops [0.3 → 1.0], glow uses stops [0.2 → 0.7].
+ */
 function buildStreetCoreColorExpr(
   scheme: HeatmapSettings["colorScheme"]
 ): maplibregl.ExpressionSpecification {
-  const c = STREET_COLORS[scheme].core;
-  return [
-    "interpolate", ["linear"], ["get", "weight"],
-    0,   `${c}0.75)`,
-    0.5, `${c}0.92)`,
-    1,   `${c}1)`,
-  ] as maplibregl.ExpressionSpecification;
+  const all = COLOR_SCHEMES[scheme];
+  const stops = all.filter(([s]) => s >= 0.25 && s <= 1.0);
+  const lo = stops[0][0], hi = stops[stops.length - 1][0], span = hi - lo;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const expr: any[] = ["interpolate", ["linear"], ["get", "weight"]];
+  stops.forEach(([s, color]) => expr.push((s - lo) / span, color));
+  return expr as maplibregl.ExpressionSpecification;
 }
 
 function buildStreetGlowColorExpr(
   scheme: HeatmapSettings["colorScheme"]
 ): maplibregl.ExpressionSpecification {
-  const c = STREET_COLORS[scheme].glow;
-  return [
-    "interpolate", ["linear"], ["get", "weight"],
-    0,   `${c}0.55)`,
-    0.5, `${c}0.70)`,
-    1,   `${c}0.85)`,
-  ] as maplibregl.ExpressionSpecification;
+  const all = COLOR_SCHEMES[scheme];
+  const stops = all.filter(([s]) => s >= 0.1 && s <= 0.7);
+  const lo = stops[0][0], hi = stops[stops.length - 1][0], span = hi - lo;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const expr: any[] = ["interpolate", ["linear"], ["get", "weight"]];
+  stops.forEach(([s, color]) => expr.push((s - lo) / span, color));
+  return expr as maplibregl.ExpressionSpecification;
 }
 
 function buildTooltipHtml(props: maplibregl.MapGeoJSONFeature["properties"]) {

@@ -13,8 +13,12 @@ interface SidebarProps {
   activeTypes: ArtifactType[];
   isOpen: boolean;
   theme: Theme;
+  autoplay: boolean;
+  ambientOn: boolean;
   onToggleType: (type: ArtifactType) => void;
   onUpdateSettings: (s: HeatmapSettings) => void;
+  onToggleAutoplay: () => void;
+  onToggleAmbient: () => void;
 }
 
 const SCHEMES: Record<HeatmapSettings["colorScheme"], { label: string; gradient: string }> = {
@@ -27,6 +31,28 @@ const SCHEMES: Record<HeatmapSettings["colorScheme"], { label: string; gradient:
   crimson:  { label: "Crimson",  gradient: "linear-gradient(to right,#320000,#8c0000,#d20014,#ff3c3c,#ffa090)" },
   infrared: { label: "Infrared", gradient: "linear-gradient(to right,#002800,#007828,#50c800,#d8f000,#ffc800)" },
 };
+
+function Toggle({ label, description, on, isDark, onToggle }: {
+  label: string; description: string; on: boolean; isDark: boolean; onToggle: () => void;
+}) {
+  return (
+    <button onClick={onToggle} className={`w-full flex items-center justify-between rounded-lg border px-3 py-2 transition-all text-left ${
+      on
+        ? isDark ? "bg-zinc-800 border-zinc-600" : "bg-zinc-50 border-zinc-300"
+        : isDark ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-100"
+    }`}>
+      <div>
+        <p className={`text-[11px] font-semibold ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>{label}</p>
+        <p className={`text-[10px] ${isDark ? "text-zinc-600" : "text-zinc-400"}`}>{description}</p>
+      </div>
+      {/* Pill toggle */}
+      <div className={`relative w-8 h-4.5 rounded-full transition-colors shrink-0 ml-2 ${on ? "bg-amber-500" : isDark ? "bg-zinc-700" : "bg-zinc-300"}`}
+        style={{ height: 18, width: 32 }}>
+        <div className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-[14px]" : "translate-x-0.5"}`} />
+      </div>
+    </button>
+  );
+}
 
 function Slider({ label, value, min, max, step, display, isDark, onChange }: {
   label: string; value: number; min: number; max: number; step: number;
@@ -50,7 +76,9 @@ function Slider({ label, value, min, max, step, display, isDark, onChange }: {
 }
 
 export default function Sidebar({
-  settings, activeTypes, isOpen, theme, onToggleType, onUpdateSettings,
+  settings, activeTypes, isOpen, theme,
+  autoplay, ambientOn,
+  onToggleType, onUpdateSettings, onToggleAutoplay, onToggleAmbient,
 }: SidebarProps) {
   const isDark = theme === "dark";
   const div = isDark ? "border-zinc-800" : "border-zinc-100";
@@ -143,6 +171,15 @@ export default function Sidebar({
               }`}>
               Reset
             </button>
+
+            {/* Preferences */}
+            <div className={`border-t pt-3 space-y-2 ${isDark ? "border-zinc-800" : "border-zinc-100"}`}>
+              <p className={`text-[10px] uppercase tracking-widest font-bold ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
+                Playback
+              </p>
+              <Toggle label="Autoplay media" description="Play on location select" on={autoplay} isDark={isDark} onToggle={onToggleAutoplay} />
+              <Toggle label="Ambient music" description="Compton — Dr. Dre × Kendrick" on={ambientOn} isDark={isDark} onToggle={onToggleAmbient} />
+            </div>
           </div>
 
         </div>

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import {
   COLOR_SCHEMES,
-  STREET_COLORS,
   HeatmapSettings,
   Theme,
   LocationSummary,
@@ -18,9 +17,7 @@ interface MiniMapProps {
   theme: Theme;
   focusLat: number;
   focusLng: number;
-  /** Click on the map → jump street view to that spot */
   onTeleport: (lat: number, lng: number) => void;
-  /** Expand icon → exit street view, go back to full map */
   onExpand: () => void;
 }
 
@@ -33,17 +30,23 @@ function buildColorExpr(scheme: HeatmapSettings["colorScheme"]) {
 }
 
 function buildStreetCoreColor(scheme: HeatmapSettings["colorScheme"]): maplibregl.ExpressionSpecification {
-  const c = STREET_COLORS[scheme].core;
-  return ["interpolate", ["linear"], ["get", "weight"],
-    0, `${c}0.75)`, 1, `${c}1)`,
-  ] as maplibregl.ExpressionSpecification;
+  const all = COLOR_SCHEMES[scheme];
+  const stops = all.filter(([s]) => s >= 0.25 && s <= 1.0);
+  const lo = stops[0][0], hi = stops[stops.length - 1][0], span = hi - lo;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const expr: any[] = ["interpolate", ["linear"], ["get", "weight"]];
+  stops.forEach(([s, color]) => expr.push((s - lo) / span, color));
+  return expr as maplibregl.ExpressionSpecification;
 }
 
 function buildStreetGlowColor(scheme: HeatmapSettings["colorScheme"]): maplibregl.ExpressionSpecification {
-  const c = STREET_COLORS[scheme].glow;
-  return ["interpolate", ["linear"], ["get", "weight"],
-    0, `${c}0.45)`, 1, `${c}0.70)`,
-  ] as maplibregl.ExpressionSpecification;
+  const all = COLOR_SCHEMES[scheme];
+  const stops = all.filter(([s]) => s >= 0.1 && s <= 0.7);
+  const lo = stops[0][0], hi = stops[stops.length - 1][0], span = hi - lo;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const expr: any[] = ["interpolate", ["linear"], ["get", "weight"]];
+  stops.forEach(([s, color]) => expr.push((s - lo) / span, color));
+  return expr as maplibregl.ExpressionSpecification;
 }
 
 export default function MiniMap({
@@ -51,10 +54,11 @@ export default function MiniMap({
   focusLat, focusLng,
   onTeleport, onExpand,
 }: MiniMapProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef       = useRef<maplibregl.Map | null>(null);
-  const markerRef    = useRef<maplibregl.Marker | null>(null);
-  const markerElRef  = useRef<HTMLDivElement | null>(null);
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const mapRef        = useRef<maplibregl.Map | null>(null);
+  const loadedRef     = useRef(false);   // true only after map "load" event fires
+  const markerRef     = useRef<maplibregl.Marker | null>(null);
+  const markerElRef   = useRef<HTMLDivElement | null>(null);
   const isDark = theme === "dark";
 
   const heatData = useMemo(() => {
@@ -86,8 +90,10 @@ export default function MiniMap({
     return { type: "FeatureCollection" as const, features };
   }, [summaries]);
 
+  /* ── Map init — recreates when theme changes ──────────────────── */
   useEffect(() => {
     if (!containerRef.current) return;
+    let destroyed = false;   // guards async load callback after cleanup
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -98,23 +104,25 @@ export default function MiniMap({
           "tiles-light": { type: "raster", tiles: ["https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"], tileSize: 256 },
         },
         layers: [
-          { id: "layer-dark",  type: "raster", source: "tiles-dark",  layout: { visibility: theme === "dark"  ? "visible" : "none" } },
-          { id: "layer-light", type: "raster", source: "tiles-light", layout: { visibility: theme === "light" ? "visible" : "none" } },
+          { id: "layer-dark",  type: "raster", source: "tiles-dark",
+            layout: { visibility: theme === "dark"  ? "visible" : "none" } },
+          { id: "layer-light", type: "raster", source: "tiles-light",
+            layout: { visibility: theme === "light" ? "visible" : "none" } },
         ],
       },
       center: [focusLng, focusLat],
       zoom: 14,
-      // Allow click + drag, but no scroll-zoom (too jarring in a tiny box)
-      scrollZoom:    false,
-      doubleClickZoom: false,
-      attributionControl: false,
+      scrollZoom: false, doubleClickZoom: false, attributionControl: false,
     });
     map.dragRotate.disable();
     map.keyboard.disable();
     map.touchZoomRotate.disableRotation();
 
     map.on("load", () => {
-      // Compton border
+      if (destroyed) return;   // component unmounted before tiles loaded
+      loadedRef.current = true;
+
+      // Border
       map.addSource("border-src", { type: "geojson", data: COMPTON_BORDER_GEOJSON });
       map.addLayer({ id: "border-glow", type: "line", source: "border-src", paint: {
         "line-color": theme === "dark" ? "rgba(34,211,238,0.25)" : "rgba(100,100,100,0.18)",
@@ -125,7 +133,7 @@ export default function MiniMap({
         "line-width": 1.2, "line-dasharray": [4, 3],
       }});
 
-      // Heatmap (points only)
+      // Heatmap
       map.addSource("heat-src", { type: "geojson", data: heatData });
       map.addLayer({ id: "heat-layer", type: "heatmap", source: "heat-src", paint: {
         "heatmap-weight":    ["interpolate", ["linear"], ["get", "weight"], 0, 0, 1, 1],
@@ -135,14 +143,13 @@ export default function MiniMap({
         "heatmap-opacity":   settings.opacity * 0.9,
       }});
 
-      // Street lines — 2-layer glow on the mini-map
+      // Streets — glow + core
       map.addSource("streets-src", { type: "geojson", data: streetsData });
       map.addLayer({ id: "streets-glow", type: "line", source: "streets-src",
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
           "line-color":   buildStreetGlowColor(settings.colorScheme),
-          "line-width":   8,
-          "line-blur":    6,
+          "line-width":   8, "line-blur": 6,
           "line-opacity": settings.opacity * 0.35,
         },
       });
@@ -156,109 +163,97 @@ export default function MiniMap({
       });
 
       // Focus marker
-      const markerEl = document.createElement("div");
-      markerElRef.current = markerEl;
-      markerEl.style.cssText = `
+      const el = document.createElement("div");
+      markerElRef.current = el;
+      el.style.cssText = `
         width:14px;height:14px;border-radius:50%;
         background:${theme === "dark" ? "#f59e0b" : "#d97706"};
         border:2.5px solid white;
         box-shadow:0 0 0 4px ${theme === "dark" ? "rgba(245,158,11,0.35)" : "rgba(217,119,6,0.28)"};
         pointer-events:none;
       `;
-      markerRef.current = new maplibregl.Marker({ element: markerEl })
+      markerRef.current = new maplibregl.Marker({ element: el })
         .setLngLat([focusLng, focusLat])
         .addTo(map);
     });
 
-    // ── Click-to-teleport ──────────────────────────────────────────
     map.on("click", (e) => {
-      onTeleport(
-        parseFloat(e.lngLat.lat.toFixed(6)),
-        parseFloat(e.lngLat.lng.toFixed(6))
-      );
+      onTeleport(parseFloat(e.lngLat.lat.toFixed(6)), parseFloat(e.lngLat.lng.toFixed(6)));
     });
 
     mapRef.current = map;
     return () => {
-      mapRef.current = null;                       // null first so sync effect bails
-      try { map.stop(); } catch { /* ignore */ }   // cancel any in-flight easeTo
+      destroyed = true;
+      loadedRef.current = false;
+      mapRef.current = null;
+      try { map.stop();   } catch { /* ignore */ }
       try { map.remove(); } catch { /* ignore */ }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
 
-  // Keep marker + centre in sync with focus location
+  /* ── Sync marker position ─────────────────────────────────────── */
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !loadedRef.current) return;
     try {
       map.easeTo({ center: [focusLng, focusLat], duration: 300 });
       markerRef.current?.setLngLat([focusLng, focusLat]);
-    } catch { /* map may have been removed */ }
+    } catch { /* map may be transitioning */ }
   }, [focusLat, focusLng]);
 
+  /* ── Sync theme paint properties ─────────────────────────────── */
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !loadedRef.current) return;
     try {
-      map.setLayoutProperty("layer-dark", "visibility", theme === "dark" ? "visible" : "none");
+      map.setLayoutProperty("layer-dark",  "visibility", theme === "dark"  ? "visible" : "none");
       map.setLayoutProperty("layer-light", "visibility", theme === "light" ? "visible" : "none");
-      map.setPaintProperty(
-        "border-glow",
-        "line-color",
-        theme === "dark" ? "rgba(34,211,238,0.25)" : "rgba(100,100,100,0.18)"
-      );
-      map.setPaintProperty(
-        "border-line",
-        "line-color",
-        theme === "dark" ? "rgba(34,211,238,0.75)" : "rgba(80,80,80,0.55)"
-      );
-      markerElRef.current?.style.setProperty(
-        "background",
-        theme === "dark" ? "#f59e0b" : "#d97706"
-      );
-      markerElRef.current?.style.setProperty(
-        "box-shadow",
-        `0 0 0 4px ${
-          theme === "dark" ? "rgba(245,158,11,0.35)" : "rgba(217,119,6,0.28)"
-        }`
-      );
-    } catch { /* map may have been removed */ }
+      map.setPaintProperty("border-glow", "line-color",
+        theme === "dark" ? "rgba(34,211,238,0.25)" : "rgba(100,100,100,0.18)");
+      map.setPaintProperty("border-line", "line-color",
+        theme === "dark" ? "rgba(34,211,238,0.75)" : "rgba(80,80,80,0.55)");
+      if (markerElRef.current) {
+        markerElRef.current.style.background  = theme === "dark" ? "#f59e0b" : "#d97706";
+        markerElRef.current.style.boxShadow   =
+          `0 0 0 4px ${theme === "dark" ? "rgba(245,158,11,0.35)" : "rgba(217,119,6,0.28)"}`;
+      }
+    } catch { /* ignore */ }
   }, [theme]);
 
+  /* ── Sync data sources ────────────────────────────────────────── */
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !loadedRef.current) return;
     try {
-      (map.getSource("heat-src") as maplibregl.GeoJSONSource | undefined)?.setData(heatData);
+      (map.getSource("heat-src")    as maplibregl.GeoJSONSource | undefined)?.setData(heatData);
       (map.getSource("streets-src") as maplibregl.GeoJSONSource | undefined)?.setData(streetsData);
-    } catch { /* map may have been removed */ }
+    } catch { /* ignore */ }
   }, [heatData, streetsData]);
 
+  /* ── Sync settings ────────────────────────────────────────────── */
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !loadedRef.current) return;
     try {
       map.setPaintProperty("heat-layer", "heatmap-intensity", settings.intensity * 0.8);
-      map.setPaintProperty("heat-layer", "heatmap-color", buildColorExpr(settings.colorScheme));
-      map.setPaintProperty("heat-layer", "heatmap-radius", settings.radius * 0.5);
-      map.setPaintProperty("heat-layer", "heatmap-opacity", settings.opacity * 0.9);
+      map.setPaintProperty("heat-layer", "heatmap-color",     buildColorExpr(settings.colorScheme));
+      map.setPaintProperty("heat-layer", "heatmap-radius",    settings.radius * 0.5);
+      map.setPaintProperty("heat-layer", "heatmap-opacity",   settings.opacity * 0.9);
       map.setPaintProperty("streets-glow", "line-color",   buildStreetGlowColor(settings.colorScheme));
       map.setPaintProperty("streets-glow", "line-opacity", settings.opacity * 0.35);
       map.setPaintProperty("streets-core", "line-color",   buildStreetCoreColor(settings.colorScheme));
       map.setPaintProperty("streets-core", "line-opacity", settings.opacity * 0.85);
-    } catch { /* map may have been removed */ }
+    } catch { /* ignore */ }
   }, [settings]);
 
   const borderCls = isDark ? "border-zinc-700 shadow-black/50" : "border-zinc-300 shadow-black/15";
-
   const btnCls = isDark
     ? "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
     : "bg-white border border-zinc-300 text-zinc-500 hover:text-zinc-700";
 
   return (
     <div className="absolute bottom-24 right-6 z-20" style={{ width: 236, height: 158 }}>
-      {/* Map canvas */}
       <div
         ref={containerRef}
         className={`w-full h-full rounded-2xl overflow-hidden border shadow-2xl cursor-crosshair ${borderCls}`}
@@ -266,31 +261,24 @@ export default function MiniMap({
 
       {/* Zoom buttons — left side */}
       <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col gap-1">
-        <button
-          onClick={(e) => { e.stopPropagation(); mapRef.current?.zoomIn(); }}
+        <button onClick={(e) => { e.stopPropagation(); mapRef.current?.zoomIn(); }}
           className={`w-6 h-6 rounded-lg flex items-center justify-center text-sm font-bold transition-all ${btnCls}`}
-          title="Zoom in"
-        >+</button>
-        <button
-          onClick={(e) => { e.stopPropagation(); mapRef.current?.zoomOut(); }}
+          title="Zoom in">+</button>
+        <button onClick={(e) => { e.stopPropagation(); mapRef.current?.zoomOut(); }}
           className={`w-6 h-6 rounded-lg flex items-center justify-center text-sm font-bold transition-all ${btnCls}`}
-          title="Zoom out"
-        >−</button>
+          title="Zoom out">−</button>
       </div>
 
       {/* Expand button — top-right */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onExpand(); }}
+      <button onClick={(e) => { e.stopPropagation(); onExpand(); }}
         className={`absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center transition-all ${btnCls}`}
-        title="Back to full map"
-      >
+        title="Back to full map">
         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
             d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2m8-16h2a2 2 0 012 2v2m0 8v2a2 2 0 01-2 2h-2" />
         </svg>
       </button>
 
-      {/* Teleport hint */}
       <div className="absolute bottom-1.5 left-0 right-0 flex justify-center pointer-events-none">
         <span className={`text-[9px] px-1.5 py-0.5 rounded ${
           isDark ? "bg-zinc-900 text-zinc-600" : "bg-white/90 text-zinc-400"
