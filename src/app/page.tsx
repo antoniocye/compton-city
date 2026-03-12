@@ -85,6 +85,11 @@ export default function Home() {
     setStreetView({ lat, lng, label });
   }, []);
 
+  // Mini-map click → teleport street view to that spot
+  const handleTeleport = useCallback((lat: number, lng: number) => {
+    setStreetView({ lat, lng, label: nearestLabel(lat, lng, locations) });
+  }, [locations]);
+
   const inStreetView = streetView !== null;
 
   return (
@@ -158,6 +163,7 @@ export default function Home() {
             theme={theme}
             focusLat={streetView.lat}
             focusLng={streetView.lng}
+            onTeleport={handleTeleport}
             onExpand={closeStreetView}
           />
         </div>

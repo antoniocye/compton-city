@@ -26,6 +26,28 @@ interface Props {
   showPins: boolean;
 }
 
+/* ── Distance → scale ─────────────────────────────────────────────── */
+function haversineM(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6_371_000;
+  const φ1 = (lat1 * Math.PI) / 180, φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * Smooth inverse-proportion scale:
+ *   < 20 m  → 1.0  (full size)
+ *   ~200 m  → 0.47
+ *   ~800 m  → 0.18 (minimum threshold)
+ *   > ~850m → hidden (returns 0)
+ */
+function distanceToScale(metres: number): number {
+  const s = 1 / (1 + metres / 180);
+  return s < 0.18 ? 0 : s;
+}
+
 /* ── Inject keyframe animation once ───────────────────────────────── */
 let animInjected = false;
 function ensureAnimation() {
@@ -54,18 +76,23 @@ function makePinEl(label: string, isDark: boolean): HTMLDivElement {
   const chipTx= isDark ? "#f1f5f9"                 : "#0f172a";
   const chipBr= isDark ? "rgba(34,211,238,0.35)"   : "rgba(2,132,199,0.3)";
 
+  // Container: handles absolute position + scale (NO animation here so
+  // scale transform doesn't fight with svFloat)
   const el = document.createElement("div");
   el.style.cssText = `
     position: absolute;
-    transform: translate(-50%, -100%);
     pointer-events: auto;
     cursor: pointer;
     z-index: 100;
-    animation: svFloat 2.8s ease-in-out infinite;
+    transform-origin: bottom center;
+    transition: transform 0.2s ease, opacity 0.2s ease;
   `;
+
+  // Inner div: handles translate(-50%,-100%) AND the float animation
+  // (combined in the keyframe so both work simultaneously)
   el.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
-      <!-- label chip -->
+    <div style="display:flex;flex-direction:column;align-items:center;
+                animation:svFloat 2.8s ease-in-out infinite;">
       <div style="
         background:${chipBg};color:${chipTx};
         border:1px solid ${chipBr};
@@ -76,12 +103,10 @@ function makePinEl(label: string, isDark: boolean): HTMLDivElement {
         backdrop-filter:blur(14px);
         box-shadow:0 6px 28px rgba(0,0,0,.55);
       ">${label}</div>
-      <!-- stem -->
       <div style="
         width:1.5px;height:22px;
         background:linear-gradient(to bottom,${dot},transparent);
       "></div>
-      <!-- dot -->
       <div style="
         width:13px;height:13px;border-radius:50%;
         background:${dot};border:2.5px solid #fff;
@@ -119,16 +144,31 @@ class StreetViewPin {
         if (!proj) return;
         const px = proj.fromLatLngToContainerPixel(pos);
         if (!px) { el.style.visibility = "hidden"; return; }
-        // Hide if well outside the viewport (behind camera)
+
+        // ── Distance-based scale ───────────────────────────────────
+        const panoPos = (this.getMap() as google.maps.StreetViewPanorama)?.getPosition();
+        let scale = 1;
+        if (panoPos) {
+          const d = haversineM(panoPos.lat(), panoPos.lng(), pos.lat(), pos.lng());
+          scale = distanceToScale(d);
+          if (scale === 0) { el.style.visibility = "hidden"; return; }
+        }
+
+        // ── Viewport culling (behind camera) ──────────────────────
         const w = container.offsetWidth;
         const h = container.offsetHeight;
         if (px.x < -300 || px.x > w + 300 || px.y < -300 || px.y > h + 300) {
           el.style.visibility = "hidden";
-        } else {
-          el.style.visibility = "visible";
-          el.style.left = `${px.x}px`;
-          el.style.top  = `${px.y}px`;
+          return;
         }
+
+        // ── Position + scale + opacity ────────────────────────────
+        el.style.visibility = "visible";
+        el.style.left    = `${px.x}px`;
+        el.style.top     = `${px.y}px`;
+        // scale from ground point; opacity fades with distance
+        el.style.transform = `scale(${scale})`;
+        el.style.opacity   = String(Math.min(1, scale * 1.4));
       }
       onRemove() { el.remove(); }
     }
