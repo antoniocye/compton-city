@@ -263,7 +263,14 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
           });
           panoramaRef.current = pano;
           pano.addListener("status_changed", () => {
-            if (!cancelled) buildPins(pano, locations, isDark, showPins, onPinClick);
+            if (cancelled) return;
+            // Re-apply heading here — Google Maps can reset the POV when the
+            // panorama finishes loading its new position, overriding the value
+            // we passed to the constructor.
+            if (heading !== undefined) {
+              pano.setPov({ heading, pitch: 0 });
+            }
+            buildPins(pano, locations, isDark, showPins, onPinClick);
           });
           setState("ready");
         });
