@@ -168,14 +168,28 @@ class StreetViewPin {
           return;
         }
 
-        // ── Ground-sinking fix ────────────────────────────────────
-        // Ground-level lat/lngs project toward the horizon (~50 % of screen
-        // height) for any location more than a few metres away. Rendering the
-        // pin anchor there makes it look buried in the road surface.
-        // For pins beyond 20 m we clamp the anchor Y to just above the horizon
-        // so the label floats in the far-distance sky rather than the tarmac.
-        const horizonY  = h * 0.46;   // slightly above the true ~50 % horizon
-        const anchorY   = (dist > 20 && px.y > horizonY) ? horizonY : px.y;
+        // ── Ground-sinking / pitch-aware horizon clamp ───────────
+        // Ground-level coords project toward the horizon for distant objects.
+        // The horizon Y changes with camera pitch:
+        //   pitch = 0  (level)  → horizon ≈ h * 0.50
+        //   pitch > 0  (up)     → horizon moves DOWN  (larger Y)
+        //   pitch < 0  (down)   → horizon moves UP    (smaller Y)
+        // vFOV ≈ 90° / 2^zoom  (Street View default: zoom=0 → ~90°)
+        // horizonY_px = h * (0.5 + pitch_deg / vFOV_deg)
+        //
+        // For pins > 20 m away we clamp the anchor to stay just ABOVE the
+        // dynamic horizon so they look like distant objects on the skyline
+        // instead of sinking into the road — and they move correctly as
+        // the user tilts the camera up or down.
+        const svPano = this.getMap() as google.maps.StreetViewPanorama;
+        const pitch  = svPano?.getPov()?.pitch  ?? 0; // °, positive = up
+        const svZoom = svPano?.getZoom()        ?? 0; // panorama zoom level
+        const vFOV   = 90 / Math.pow(2, svZoom);      // approx. vertical FOV °
+        const dynHorizonY = h * (0.5 + pitch / vFOV);
+        const clampY  = dynHorizonY - 18;         // 18 px above the horizon line
+        const anchorY = (dist > 20 && px.y > clampY)
+          ? Math.max(0, Math.min(clampY, h * 0.96))
+          : px.y;
 
         // ── Position + scale + opacity ────────────────────────────
         el.style.visibility = "visible";
