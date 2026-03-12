@@ -118,11 +118,11 @@ export default function MiniMap({
       // Compton border
       map.addSource("border-src", { type: "geojson", data: COMPTON_BORDER_GEOJSON });
       map.addLayer({ id: "border-glow", type: "line", source: "border-src", paint: {
-        "line-color": theme === "dark" ? "rgba(34,211,238,0.3)" : "rgba(2,132,199,0.2)",
+        "line-color": theme === "dark" ? "rgba(34,211,238,0.25)" : "rgba(100,100,100,0.18)",
         "line-width": 6, "line-blur": 5,
       }});
       map.addLayer({ id: "border-line", type: "line", source: "border-src", paint: {
-        "line-color": theme === "dark" ? "rgba(34,211,238,0.8)" : "rgba(2,100,180,0.75)",
+        "line-color": theme === "dark" ? "rgba(34,211,238,0.75)" : "rgba(80,80,80,0.55)",
         "line-width": 1.2, "line-dasharray": [4, 3],
       }});
 
@@ -161,9 +161,9 @@ export default function MiniMap({
       markerElRef.current = markerEl;
       markerEl.style.cssText = `
         width:14px;height:14px;border-radius:50%;
-        background:${theme === "dark" ? "#22d3ee" : "#0284c7"};
+        background:${theme === "dark" ? "#f59e0b" : "#d97706"};
         border:2.5px solid white;
-        box-shadow:0 0 0 4px ${theme === "dark" ? "rgba(34,211,238,0.35)" : "rgba(2,132,199,0.28)"};
+        box-shadow:0 0 0 4px ${theme === "dark" ? "rgba(245,158,11,0.35)" : "rgba(217,119,6,0.28)"};
         pointer-events:none;
       `;
       markerRef.current = new maplibregl.Marker({ element: markerEl })
@@ -207,21 +207,21 @@ export default function MiniMap({
       map.setPaintProperty(
         "border-glow",
         "line-color",
-        theme === "dark" ? "rgba(34,211,238,0.3)" : "rgba(2,132,199,0.2)"
+        theme === "dark" ? "rgba(34,211,238,0.25)" : "rgba(100,100,100,0.18)"
       );
       map.setPaintProperty(
         "border-line",
         "line-color",
-        theme === "dark" ? "rgba(34,211,238,0.8)" : "rgba(2,100,180,0.75)"
+        theme === "dark" ? "rgba(34,211,238,0.75)" : "rgba(80,80,80,0.55)"
       );
       markerElRef.current?.style.setProperty(
         "background",
-        theme === "dark" ? "#22d3ee" : "#0284c7"
+        theme === "dark" ? "#f59e0b" : "#d97706"
       );
       markerElRef.current?.style.setProperty(
         "box-shadow",
         `0 0 0 4px ${
-          theme === "dark" ? "rgba(34,211,238,0.35)" : "rgba(2,132,199,0.28)"
+          theme === "dark" ? "rgba(245,158,11,0.35)" : "rgba(217,119,6,0.28)"
         }`
       );
     } catch { /* map may have been removed */ }
@@ -249,7 +249,7 @@ export default function MiniMap({
     } catch { /* map may have been removed */ }
   }, [settings]);
 
-  const borderCls = isDark ? "border-white/15 shadow-black/60" : "border-slate-300/60 shadow-black/20";
+  const borderCls = isDark ? "border-zinc-700 shadow-black/50" : "border-zinc-300 shadow-black/15";
 
   return (
     <div
@@ -267,8 +267,8 @@ export default function MiniMap({
         onClick={(e) => { e.stopPropagation(); onExpand(); }}
         className={`absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-150 ${
           isDark
-            ? "bg-black/55 border border-white/10 text-white/60 hover:text-white hover:bg-black/75"
-            : "bg-white/80 border border-black/8 text-slate-500 hover:text-slate-800 hover:bg-white"
+            ? "bg-zinc-900 border border-zinc-700 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800"
+            : "bg-white border border-zinc-300 text-zinc-500 hover:text-zinc-800"
         }`}
         title="Back to full map"
       >
@@ -281,7 +281,7 @@ export default function MiniMap({
       {/* Teleport hint — bottom, always visible */}
       <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
         <span className={`text-[9px] px-2 py-0.5 rounded-md ${
-          isDark ? "bg-black/50 text-white/35" : "bg-white/70 text-slate-400"
+          isDark ? "bg-zinc-900 text-zinc-600" : "bg-white text-zinc-400"
         }`}>
           Click to teleport
         </span>

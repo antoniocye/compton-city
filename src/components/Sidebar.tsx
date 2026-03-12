@@ -14,7 +14,7 @@ interface SidebarProps {
   isOpen: boolean;
   theme: Theme;
   onToggleType: (type: ArtifactType) => void;
-  onUpdateSettings: (settings: HeatmapSettings) => void;
+  onUpdateSettings: (s: HeatmapSettings) => void;
 }
 
 const SCHEMES: Record<HeatmapSettings["colorScheme"], { label: string; gradient: string }> = {
@@ -24,19 +24,17 @@ const SCHEMES: Record<HeatmapSettings["colorScheme"], { label: string; gradient:
   viridis: { label: "Viridis", gradient: "linear-gradient(to right, #0a3820, #146450, #1ea078, #60c830, #fde725)" },
 };
 
-interface SliderProps {
+function Slider({ label, value, min, max, step, display, isDark, onChange }: {
   label: string; value: number; min: number; max: number; step: number;
-  display?: string; isDark: boolean;
-  onChange: (v: number) => void;
-}
-function Slider({ label, value, min, max, step, display, isDark, onChange }: SliderProps) {
+  display?: string; isDark: boolean; onChange: (v: number) => void;
+}) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <div className="flex justify-between items-center">
-        <span className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-stone-500" : "text-stone-400"}`}>
+        <span className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
           {label}
         </span>
-        <span className={`text-xs font-mono font-bold ${isDark ? "text-amber-400" : "text-amber-700"}`}>
+        <span className={`text-xs font-mono font-bold ${isDark ? "text-amber-400" : "text-amber-600"}`}>
           {display ?? value}
         </span>
       </div>
@@ -48,150 +46,109 @@ function Slider({ label, value, min, max, step, display, isDark, onChange }: Sli
 }
 
 export default function Sidebar({
-  settings,
-  activeTypes,
-  isOpen,
-  theme,
-  onToggleType,
-  onUpdateSettings,
+  settings, activeTypes, isOpen, theme, onToggleType, onUpdateSettings,
 }: SidebarProps) {
   const isDark = theme === "dark";
 
-  /* ── Theme tokens ───────────────────────────────────────────────────── */
-  const panel = isDark
-    ? "bg-[#181411]/92 border-white/[0.06]"
-    : "bg-[#fdfaf3]/96 border-stone-300/40 shadow-2xl shadow-black/10";
-
-  const divider = isDark ? "border-white/[0.05]" : "border-stone-200/60";
-
-  const listRow = isDark
-    ? "bg-white/[0.025] hover:bg-white/[0.05] border-white/[0.05]"
-    : "bg-stone-50/80 hover:bg-stone-100/80 border-stone-200/60";
-
-  const listLabel = isDark ? "text-stone-300" : "text-stone-800";
-  const listSub = isDark ? "text-stone-600" : "text-stone-400";
-
-  const resetBtn = isDark
-    ? "text-stone-600 border-white/[0.07] hover:text-stone-400 hover:border-white/[0.13]"
-    : "text-stone-400 border-stone-200 hover:text-stone-600 hover:border-stone-300";
-
   return (
-    <aside className={`absolute top-0 left-0 h-full z-10 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
-      <div className="h-full w-64 pt-[72px] pb-4 pl-3">
-        <div className={`h-full w-64 flex flex-col border backdrop-blur-2xl rounded-2xl overflow-hidden ${panel}`}>
-          <div className={`px-4 py-3 border-b ${divider}`}>
-            <p className={`text-[11px] uppercase tracking-[0.18em] font-semibold ${isDark ? "text-stone-500" : "text-stone-400"}`}>
+    <aside className={`absolute top-0 left-0 h-full z-10 transition-transform duration-300 ease-in-out ${
+      isOpen ? "translate-x-0" : "-translate-x-full"
+    }`}>
+      <div className="h-full w-64 pt-[68px] pb-4 pl-3">
+        <div className={`h-full w-64 flex flex-col border rounded-xl overflow-hidden shadow-2xl ${
+          isDark
+            ? "bg-zinc-900 border-zinc-700"
+            : "bg-white border-zinc-200"
+        }`}>
+
+          {/* Header */}
+          <div className={`px-4 py-3 border-b ${isDark ? "border-zinc-800" : "border-zinc-100"}`}>
+            <p className={`text-[11px] uppercase tracking-[0.18em] font-bold ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
               Settings
-            </p>
-            <p className={`text-xs mt-1 ${listSub}`}>
-              Filter and style the cultural artifact heatmap.
             </p>
           </div>
 
           <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-6">
-            <div className="space-y-2.5">
-              <span className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-stone-500" : "text-stone-400"}`}>
-                Active Artifact Types
-              </span>
-              <div className="grid grid-cols-1 gap-2">
+
+            {/* Artifact types */}
+            <div className="space-y-2">
+              <p className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
+                Artifact Types
+              </p>
+              <div className="grid grid-cols-1 gap-1.5">
                 {ARTIFACT_TYPES.map((type) => {
-                  const meta = ARTIFACT_TYPE_META[type];
+                  const meta   = ARTIFACT_TYPE_META[type];
                   const active = activeTypes.includes(type);
                   return (
-                    <button
-                      key={type}
-                      onClick={() => onToggleType(type)}
-                      className={`rounded-xl border px-3 py-2 text-left transition-all ${
+                    <button key={type} onClick={() => onToggleType(type)}
+                      className={`rounded-lg border px-3 py-2 text-left transition-all ${
                         active
                           ? isDark
-                            ? "bg-amber-500/10 border-amber-500/28"
-                            : "bg-amber-50/70 border-amber-400/50"
-                          : listRow
-                      }`}
-                    >
-                      <span className="block text-[10px] uppercase tracking-[0.16em] font-semibold" style={{ color: meta.accent }}>
-                        {meta.shortLabel}
+                            ? "bg-zinc-800 border-zinc-600"
+                            : "bg-zinc-50 border-zinc-300"
+                          : isDark
+                            ? "bg-zinc-900 border-zinc-800 opacity-40"
+                            : "bg-white border-zinc-100 opacity-40"
+                      }`}>
+                      <span className="block text-[10px] uppercase tracking-[0.15em] font-bold"
+                        style={{ color: meta.accent }}>{meta.shortLabel}</span>
+                      <span className={`block text-xs mt-0.5 ${isDark ? "text-zinc-300" : "text-zinc-700"}`}>
+                        {meta.label}
                       </span>
-                      <span className={`block text-xs mt-0.5 ${listLabel}`}>{meta.label}</span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            <div className="space-y-2.5">
-              <span className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-stone-500" : "text-stone-400"}`}>
+            {/* Color scheme */}
+            <div className="space-y-2">
+              <p className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>
                 Color Scheme
-              </span>
-              <div className="grid grid-cols-2 gap-2">
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
                 {(Object.keys(SCHEMES) as HeatmapSettings["colorScheme"][]).map((scheme) => {
                   const { label, gradient } = SCHEMES[scheme];
                   const active = settings.colorScheme === scheme;
                   return (
-                    <button
-                      key={scheme}
-                      onClick={() => onUpdateSettings({ ...settings, colorScheme: scheme })}
-                      className={`relative overflow-hidden rounded-xl h-11 transition-all duration-200 border-2 ${
+                    <button key={scheme} onClick={() => onUpdateSettings({ ...settings, colorScheme: scheme })}
+                      className={`relative overflow-hidden rounded-lg h-10 transition-all border-2 ${
                         active
-                          ? "border-white/70 scale-[1.03] shadow-lg"
-                          : "border-transparent hover:border-white/20"
-                      }`}
-                    >
+                          ? isDark ? "border-zinc-300 scale-[1.03]" : "border-zinc-600 scale-[1.03]"
+                          : "border-transparent opacity-75 hover:opacity-100"
+                      }`}>
                       <div className="absolute inset-0" style={{ background: gradient }} />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[11px] font-bold text-white drop-shadow-md">{label}</span>
-                      </div>
+                      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-white drop-shadow">
+                        {label}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            <div className="space-y-5">
-              <Slider
-                label="Radius"
-                value={settings.radius}
-                min={10}
-                max={80}
-                step={1}
-                isDark={isDark}
-                display={`${settings.radius}px`}
-                onChange={(value) => onUpdateSettings({ ...settings, radius: value })}
-              />
-              <Slider
-                label="Intensity"
-                value={settings.intensity}
-                min={0.5}
-                max={5}
-                step={0.1}
-                isDark={isDark}
-                display={settings.intensity.toFixed(1)}
-                onChange={(value) => onUpdateSettings({ ...settings, intensity: value })}
-              />
-              <Slider
-                label="Opacity"
-                value={settings.opacity}
-                min={0.1}
-                max={1}
-                step={0.05}
-                isDark={isDark}
-                display={`${Math.round(settings.opacity * 100)}%`}
-                onChange={(value) => onUpdateSettings({ ...settings, opacity: value })}
-              />
+            {/* Sliders */}
+            <div className="space-y-4">
+              <Slider label="Radius" value={settings.radius} min={10} max={80} step={1}
+                display={`${settings.radius}px`} isDark={isDark}
+                onChange={(v) => onUpdateSettings({ ...settings, radius: v })} />
+              <Slider label="Intensity" value={settings.intensity} min={0.5} max={5} step={0.1}
+                display={settings.intensity.toFixed(1)} isDark={isDark}
+                onChange={(v) => onUpdateSettings({ ...settings, intensity: v })} />
+              <Slider label="Opacity" value={settings.opacity} min={0.1} max={1} step={0.05}
+                display={`${Math.round(settings.opacity * 100)}%`} isDark={isDark}
+                onChange={(v) => onUpdateSettings({ ...settings, opacity: v })} />
             </div>
 
+            {/* Reset */}
             <button
-              onClick={() =>
-                onUpdateSettings({
-                  radius: 30,
-                  intensity: 1.5,
-                  opacity: 0.85,
-                  colorScheme: "fire",
-                })
-              }
-              className={`w-full py-2 rounded-xl text-xs border transition-all duration-200 ${resetBtn}`}
-            >
-              Reset to defaults
+              onClick={() => onUpdateSettings({ radius: 30, intensity: 1.5, opacity: 0.85, colorScheme: "fire" })}
+              className={`w-full py-2 rounded-lg text-xs border transition-all ${
+                isDark
+                  ? "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"
+                  : "border-zinc-200 text-zinc-400 hover:border-zinc-400 hover:text-zinc-600"
+              }`}>
+              Reset defaults
             </button>
           </div>
         </div>

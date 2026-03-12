@@ -83,11 +83,11 @@ function makePinEl(
   summary: LocationSummary,
   isDark: boolean
 ): HTMLDivElement {
-  const ring  = isDark ? "rgba(245,158,11,0.40)"  : "rgba(180,83,9,0.32)";
-  const dot   = isDark ? "#f59e0b" : "#b45309";
-  const chipBg= isDark ? "rgba(20,16,12,0.95)"     : "rgba(253,250,243,0.97)";
-  const chipTx= isDark ? "#f2ede6"                 : "#1a1208";
-  const chipBr= isDark ? "rgba(245,158,11,0.35)" : "rgba(180,83,9,0.28)";
+  const ring  = isDark ? "rgba(245,158,11,0.35)"  : "rgba(217,119,6,0.30)";
+  const dot   = isDark ? "#f59e0b" : "#d97706";
+  const chipBg= isDark ? "#18181b"                 : "#ffffff";
+  const chipTx= isDark ? "#f4f4f5"                 : "#18181b";
+  const chipBr= isDark ? "#3f3f46"                 : "#d4d4d8";
   const typeRow = summary.dominantTypes
     .map((type) => {
       const meta = ARTIFACT_TYPE_META[type];
@@ -104,7 +104,7 @@ function makePinEl(
         display:inline-flex;align-items:center;justify-content:center;
         padding:2px 6px;border-radius:999px;font-size:9px;font-weight:800;
         letter-spacing:.12em;text-transform:uppercase;
-        color:${chipTx};background:${isDark ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"};
+        color:${chipTx};background:${isDark ? "#27272a" : "#f4f4f5"};
       ">${summary.artifactCount}X</span>`
     : "";
 
@@ -367,16 +367,18 @@ export default function StreetViewScene({
   }, [summaries, isDark, onPinClick, state, buildPins]);
 
   /* ── Shared tokens ───────────────────────────────────────────────── */
-  const bg   = isDark ? "bg-[#0e0b09]" : "bg-[#f0e8d4]";
-  const txt  = isDark ? "text-stone-200" : "text-stone-700";
-  const sub  = isDark ? "text-stone-500" : "text-stone-400";
-  const code = isDark ? "bg-white/[0.06] text-amber-300" : "bg-stone-200 text-amber-700";
-  const link = "text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors";
+  const bg   = isDark ? "bg-zinc-950" : "bg-zinc-100";
+  const txt  = isDark ? "text-zinc-100" : "text-zinc-800";
+  const sub  = isDark ? "text-zinc-400" : "text-zinc-500";
+  const code = isDark ? "bg-zinc-800 text-amber-300 border border-zinc-700" : "bg-zinc-100 text-amber-700 border border-zinc-200";
+  const link = isDark
+    ? "text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors"
+    : "text-amber-600 hover:text-amber-500 underline underline-offset-2 transition-colors";
 
   const Step = ({ n, children }: { n: number; children: React.ReactNode }) => (
     <div className="flex items-start gap-3 text-left">
       <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold mt-0.5 ${
-        isDark ? "bg-amber-500/15 text-amber-400" : "bg-amber-100 text-amber-700"}`}>{n}</span>
+        isDark ? "bg-zinc-700 text-zinc-300" : "bg-zinc-200 text-zinc-700"}`}>{n}</span>
       <span className={`text-sm leading-relaxed ${sub}`}>{children}</span>
     </div>
   );
@@ -423,8 +425,8 @@ export default function StreetViewScene({
     return (
       <div className={`w-full h-full flex items-center justify-center ${bg}`}>
         <div className="max-w-xs text-center space-y-4 px-6">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto ${isDark ? "bg-stone-700/30 border border-stone-600/30" : "bg-stone-200 border border-stone-300"}`}>
-            <svg className={`w-7 h-7 ${isDark ? "text-stone-500" : "text-stone-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto ${isDark ? "bg-zinc-800 border border-zinc-700" : "bg-zinc-200 border border-zinc-300"}`}>
+            <svg className={`w-7 h-7 ${isDark ? "text-zinc-500" : "text-zinc-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -451,7 +453,7 @@ export default function StreetViewScene({
       {state === "loading" && (
         <div className={`absolute inset-0 flex flex-col items-center justify-center gap-4 z-10 ${bg}`}>
           <div className="relative w-10 h-10">
-            <div className={`absolute inset-0 rounded-full border-2 ${isDark ? "border-white/10" : "border-amber-200"}`} />
+            <div className={`absolute inset-0 rounded-full border-2 ${isDark ? "border-zinc-700" : "border-zinc-300"}`} />
             <div className={`absolute inset-0 rounded-full border-2 border-t-transparent animate-spin ${isDark ? "border-amber-400" : "border-amber-600"}`} />
           </div>
           <p className={`text-sm ${sub}`}>Stepping into the street…</p>

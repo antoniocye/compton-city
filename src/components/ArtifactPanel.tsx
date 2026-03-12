@@ -22,6 +22,35 @@ interface ArtifactPanelProps {
   onClose?: () => void;
 }
 
+// Fully opaque panel — no backdrop-blur on content panels
+const D = {
+  panel:    "bg-zinc-900 border-zinc-700",
+  header:   "border-zinc-800",
+  text:     "text-zinc-100",
+  sub:      "text-zinc-400",
+  muted:    "text-zinc-500",
+  surface:  "bg-zinc-800 border-zinc-700",
+  idle:     "bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100",
+  selected: "bg-amber-500/15 border-amber-500/40 text-amber-200",
+  nav:      "bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100",
+  link:     "text-amber-400 border-amber-500/30 hover:bg-amber-500/10 hover:border-amber-400/60",
+  close:    "bg-zinc-800 border-zinc-700 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-700",
+};
+
+const L = {
+  panel:    "bg-white border-zinc-200",
+  header:   "border-zinc-100",
+  text:     "text-zinc-900",
+  sub:      "text-zinc-500",
+  muted:    "text-zinc-400",
+  surface:  "bg-zinc-50 border-zinc-200",
+  idle:     "bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900",
+  selected: "bg-amber-50 border-amber-300 text-amber-800",
+  nav:      "bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900",
+  link:     "text-amber-700 border-amber-300 hover:bg-amber-50 hover:border-amber-400",
+  close:    "bg-zinc-50 border-zinc-200 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100",
+};
+
 export default function ArtifactPanel({
   summary,
   selectedArtifactId,
@@ -32,142 +61,94 @@ export default function ArtifactPanel({
 }: ArtifactPanelProps) {
   if (!summary) return null;
 
-  const isDark = theme === "dark";
+  const T = theme === "dark" ? D : L;
   const artifact =
-    summary.artifacts.find((entry) => entry.id === selectedArtifactId) ??
+    summary.artifacts.find((a) => a.id === selectedArtifactId) ??
     getPrimaryArtifact(summary);
 
   if (!artifact) return null;
 
-  const currentIndex = summary.artifacts.findIndex((a) => a.id === artifact.id);
-  const hasMultiple = summary.artifacts.length > 1;
+  const idx = summary.artifacts.findIndex((a) => a.id === artifact.id);
+  const multi = summary.artifacts.length > 1;
 
   const goPrev = () => {
-    const prev = currentIndex > 0 ? summary.artifacts[currentIndex - 1] : summary.artifacts[summary.artifacts.length - 1];
-    onSelectArtifact(prev.id);
+    const p = idx > 0 ? summary.artifacts[idx - 1] : summary.artifacts[summary.artifacts.length - 1];
+    onSelectArtifact(p.id);
   };
   const goNext = () => {
-    const next = currentIndex < summary.artifacts.length - 1 ? summary.artifacts[currentIndex + 1] : summary.artifacts[0];
-    onSelectArtifact(next.id);
+    const n = idx < summary.artifacts.length - 1 ? summary.artifacts[idx + 1] : summary.artifacts[0];
+    onSelectArtifact(n.id);
   };
 
-  const panelCls = isDark
-    ? "bg-[#181411]/92 border-white/[0.07] shadow-2xl shadow-black/55"
-    : "bg-[#fdfaf3]/96 border-stone-300/40 shadow-2xl shadow-black/12";
-  const muted = isDark ? "text-stone-500" : "text-stone-400";
-  const listIdle = isDark
-    ? "bg-white/[0.03] border-white/[0.05] text-stone-400 hover:text-stone-100 hover:border-white/[0.12]"
-    : "bg-stone-50 border-stone-200/60 text-stone-500 hover:text-stone-900 hover:border-stone-300";
-  const selectedCls = isDark
-    ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
-    : "bg-amber-50 border-amber-400/50 text-amber-800";
-  const surface = isDark
-    ? "bg-white/[0.03] border-white/[0.06]"
-    : "bg-stone-50/90 border-stone-200/60";
-  const navBtn = isDark
-    ? "border-white/[0.07] text-stone-400 hover:text-stone-100 hover:border-amber-500/38"
-    : "border-stone-200 text-stone-500 hover:text-stone-800 hover:border-amber-500/50";
-
   return (
-    <div
-      className={`border backdrop-blur-2xl rounded-3xl overflow-hidden max-h-full flex flex-col ${panelCls} ${className}`}
-    >
-      <div className="p-4 pb-2 border-b border-inherit shrink-0">
+    <div className={`border rounded-2xl overflow-hidden max-h-full flex flex-col shadow-2xl ${T.panel} ${className}`}>
+
+      {/* Header */}
+      <div className={`px-4 py-3 border-b ${T.header} shrink-0`}>
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold tracking-tight">
-              {summary.location.name}
-            </p>
-            <p className={`text-[11px] mt-1 ${muted}`}>
-              {summary.artifactCount} artifact
-              {summary.artifactCount !== 1 ? "s" : ""} tied to this location
-              {summary.location.neighborhood
-                ? ` · ${summary.location.neighborhood}`
-                : ""}
+          <div className="min-w-0">
+            <p className={`text-sm font-semibold truncate ${T.text}`}>{summary.location.name}</p>
+            <p className={`text-[11px] mt-0.5 ${T.muted}`}>
+              {summary.artifactCount} artifact{summary.artifactCount !== 1 ? "s" : ""}
+              {summary.location.neighborhood ? ` · ${summary.location.neighborhood}` : ""}
             </p>
           </div>
           {onClose && (
             <button
               onClick={onClose}
-              className={`w-8 h-8 rounded-xl border transition-colors shrink-0 flex items-center justify-center ${
-                isDark
-                  ? "border-white/[0.06] text-stone-500 hover:text-stone-100 hover:border-white/[0.14]"
-                  : "border-stone-200 text-stone-400 hover:text-stone-700 hover:border-stone-300"
-              }`}
-              title="Close artifact panel"
+              className={`shrink-0 w-7 h-7 rounded-lg border flex items-center justify-center transition-colors ${T.close}`}
             >
-              <svg
-                className="w-4 h-4 mx-auto"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           )}
         </div>
       </div>
 
-      {/* Artifact row: prev | chips | next */}
-      <div className="px-3 py-2 border-b border-inherit shrink-0">
-        <div className="flex items-center gap-2">
-          {hasMultiple && (
-            <button
-              onClick={goPrev}
-              className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${navBtn}`}
-              title="Previous artifact"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      {/* Artifact tabs */}
+      <div className={`px-3 py-2 border-b ${T.header} shrink-0`}>
+        <div className="flex items-center gap-1.5">
+          {multi && (
+            <button onClick={goPrev} className={`shrink-0 w-7 h-7 rounded-lg border flex items-center justify-center transition-colors ${T.nav}`}>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           )}
-          <div className="flex-1 min-w-0 overflow-x-auto scrollbar-thin flex gap-2 py-1">
-            {summary.artifacts.map((entry) => (
+          <div className="flex-1 min-w-0 overflow-x-auto scrollbar-thin flex gap-1.5 py-0.5">
+            {summary.artifacts.map((a) => (
               <button
-                key={entry.id}
-                onClick={() => onSelectArtifact(entry.id)}
-                className={`shrink-0 rounded-xl border px-2.5 py-1.5 text-left transition-all whitespace-nowrap ${
-                  entry.id === artifact.id ? selectedCls : listIdle
+                key={a.id}
+                onClick={() => onSelectArtifact(a.id)}
+                className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-left transition-all whitespace-nowrap ${
+                  a.id === artifact.id ? T.selected : T.idle
                 }`}
               >
-                <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: ARTIFACT_TYPE_META[entry.type].accent }}>
-                  {ARTIFACT_TYPE_META[entry.type].shortLabel}
+                <span className="text-[10px] uppercase tracking-wider font-bold block"
+                  style={{ color: ARTIFACT_TYPE_META[a.type].accent }}>
+                  {ARTIFACT_TYPE_META[a.type].shortLabel}
                 </span>
-                <span className="text-[11px] font-medium truncate block max-w-[120px]">
-                  {entry.title}
-                </span>
+                <span className={`text-[11px] font-medium truncate block max-w-[110px] ${T.sub}`}>{a.title}</span>
               </button>
             ))}
           </div>
-          {hasMultiple && (
-            <button
-              onClick={goNext}
-              className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${navBtn}`}
-              title="Next artifact"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {multi && (
+            <button onClick={goNext} className={`shrink-0 w-7 h-7 rounded-lg border flex items-center justify-center transition-colors ${T.nav}`}>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           )}
         </div>
-        {hasMultiple && (
-          <p className={`text-[10px] mt-1.5 ${muted}`}>
-            {currentIndex + 1} of {summary.artifacts.length}
-          </p>
+        {multi && (
+          <p className={`text-[10px] mt-1 ${T.muted}`}>{idx + 1} of {summary.artifacts.length}</p>
         )}
       </div>
 
-      {/* Main content: one artifact at a time */}
-      <div className="p-4 overflow-y-auto flex-1 min-h-0">
-        <ArtifactBody artifact={artifact} theme={theme} surface={surface} muted={muted} />
+      {/* Body */}
+      <div className="p-4 overflow-y-auto flex-1 min-h-0 scrollbar-thin">
+        <ArtifactBody artifact={artifact} T={T} />
       </div>
     </div>
   );
@@ -175,84 +156,65 @@ export default function ArtifactPanel({
 
 function ArtifactBody({
   artifact,
-  theme,
-  surface,
-  muted,
+  T,
 }: {
   artifact: CulturalArtifact;
-  theme: Theme;
-  surface: string;
-  muted: string;
+  T: typeof D;
 }) {
-  const isDark = theme === "dark";
   const resourceLink = getArtifactLink(artifact.resource);
   const youtubeEmbed = getYouTubeEmbedUrl(artifact.resource);
   const spotifyEmbed = getSpotifyEmbedUrl(artifact.resource);
+  const meta         = ARTIFACT_TYPE_META[artifact.type];
 
   return (
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <TypeChip type={artifact.type} />
-            {artifact.year && (
-              <span className={`text-[10px] uppercase tracking-widest ${muted}`}>
-                {artifact.year}
-              </span>
-            )}
-          </div>
-          <p className="text-lg font-semibold tracking-tight mt-2">{artifact.title}</p>
-          <p className={`text-sm mt-1 ${muted}`}>
-            {artifact.creator}
-            {artifact.sourceTitle ? ` · ${artifact.sourceTitle}` : ""}
+        <div className="min-w-0">
+          <span
+            className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
+            style={{ color: meta.accent, background: `${meta.accent}18`, border: `1px solid ${meta.accent}40` }}
+          >
+            {meta.label}
+          </span>
+          {artifact.year && (
+            <span className={`ml-2 text-[10px] uppercase tracking-widest ${T.muted}`}>{artifact.year}</span>
+          )}
+          <p className={`text-base font-semibold leading-tight mt-2 ${T.text}`}>{artifact.title}</p>
+          <p className={`text-xs mt-1 ${T.sub}`}>
+            {artifact.creator}{artifact.sourceTitle ? ` · ${artifact.sourceTitle}` : ""}
           </p>
         </div>
-        <span
-          className={`text-[11px] font-mono px-2.5 py-1 rounded-xl border ${surface}`}
-        >
-          heat {artifact.heatWeight.toFixed(2)}
+        <span className={`shrink-0 text-[11px] font-mono px-2 py-1 rounded-lg border ${T.surface} ${T.muted}`}>
+          {artifact.heatWeight.toFixed(2)}
         </span>
       </div>
 
       {artifact.caption && (
-        <blockquote className={`rounded-2xl border p-3 text-sm leading-relaxed ${surface}`}>
+        <blockquote className={`rounded-xl border p-3 text-sm leading-relaxed italic ${T.surface} ${T.sub}`}>
           {artifact.caption}
         </blockquote>
       )}
 
-      <div className={`rounded-2xl border overflow-hidden ${surface}`}>
+      {/* Media */}
+      <div className={`rounded-xl border overflow-hidden ${T.surface}`}>
         {youtubeEmbed ? (
-          <iframe
-            className="w-full aspect-video"
-            src={youtubeEmbed}
-            title={artifact.title}
+          <iframe className="w-full aspect-video" src={youtubeEmbed} title={artifact.title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+            allowFullScreen />
         ) : spotifyEmbed ? (
-          <iframe
-            className="w-full"
-            src={spotifyEmbed}
-            title={artifact.title}
-            height="152"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy"
-          />
+          <iframe className="w-full" src={spotifyEmbed} title={artifact.title} height="152"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" />
         ) : artifact.resource.kind === "image" && artifact.resource.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={artifact.resource.imageUrl}
-            alt={artifact.title}
-            className="w-full aspect-video object-cover"
-          />
+          <img src={artifact.resource.imageUrl} alt={artifact.title} className="w-full aspect-video object-cover" />
         ) : (
           <div className="aspect-video flex items-center justify-center px-6 text-center">
             <div>
-              <p className="text-sm font-semibold">{ARTIFACT_TYPE_META[artifact.type].label}</p>
-              <p className={`text-xs mt-2 ${muted}`}>
+              <p className={`text-sm font-semibold ${T.sub}`}>{meta.label}</p>
+              <p className={`text-xs mt-1.5 ${T.muted}`}>
                 {artifact.resource.kind === "image"
-                  ? artifact.resource.credit || "Open external image source"
-                  : "Open the source link to explore the full artifact."}
+                  ? (artifact.resource.credit ?? "No image preview")
+                  : "Open source link below"}
               </p>
             </div>
           </div>
@@ -260,43 +222,15 @@ function ArtifactBody({
       </div>
 
       {resourceLink && (
-        <a
-          href={resourceLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold border transition-colors ${
-            isDark
-              ? "text-amber-300 border-amber-500/25 hover:border-amber-400/50 hover:bg-amber-500/10"
-              : "text-amber-700 border-amber-400/50 hover:border-amber-500/70 hover:bg-amber-50"
-          }`}
-        >
-          Open resource
+        <a href={resourceLink} target="_blank" rel="noopener noreferrer"
+          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold border transition-colors ${T.link}`}>
+          Open source
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
         </a>
       )}
     </div>
-  );
-}
-
-function TypeChip({ type }: { type: CulturalArtifact["type"] }) {
-  const meta = ARTIFACT_TYPE_META[type];
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
-      style={{
-        color: meta.accent,
-        backgroundColor: `${meta.accent}20`,
-        border: `1px solid ${meta.accent}55`,
-      }}
-    >
-      {meta.label}
-    </span>
   );
 }

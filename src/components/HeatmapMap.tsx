@@ -152,13 +152,13 @@ function buildTooltipHtml(props: maplibregl.MapGeoJSONFeature["properties"]) {
 }
 
 const MASK_COLOR: Record<Theme, string> = {
-  dark:  "rgba(14, 11, 9, 1)",
-  light: "rgba(228, 216, 195, 1)",
+  dark:  "rgba(9, 9, 11, 1)",    // zinc-950
+  light: "rgba(228, 228, 231, 1)", // zinc-200
 };
-const MASK_OPACITY: Record<Theme, number> = { dark: 0.68, light: 0.60 };
+const MASK_OPACITY: Record<Theme, number> = { dark: 0.72, light: 0.58 };
 const BORDER: Record<Theme, { glow: string; line: string }> = {
-  dark:  { glow: "rgba(34,211,238,0.25)",  line: "rgba(34,211,238,0.80)" },
-  light: { glow: "rgba(180,120,20,0.22)",  line: "rgba(160,100,10,0.70)" },
+  dark:  { glow: "rgba(34,211,238,0.22)",  line: "rgba(34,211,238,0.75)" },
+  light: { glow: "rgba(100,100,100,0.18)", line: "rgba(80,80,80,0.55)"   },
 };
 
 export default function HeatmapMap({
