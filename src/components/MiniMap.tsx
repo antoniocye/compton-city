@@ -117,7 +117,11 @@ export default function MiniMap({
     });
 
     mapRef.current = map;
-    return () => { map.remove(); mapRef.current = null; };
+    return () => {
+      mapRef.current = null;                       // null first so sync effect bails
+      try { map.stop(); } catch { /* ignore */ }   // cancel any in-flight easeTo
+      try { map.remove(); } catch { /* ignore */ }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -125,8 +129,10 @@ export default function MiniMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    map.easeTo({ center: [focusLng, focusLat], duration: 400 });
-    markerRef.current?.setLngLat([focusLng, focusLat]);
+    try {
+      map.easeTo({ center: [focusLng, focusLat], duration: 300 });
+      markerRef.current?.setLngLat([focusLng, focusLat]);
+    } catch { /* map may have been removed */ }
   }, [focusLat, focusLng]);
 
   const borderCls = isDark ? "border-white/15 shadow-black/60" : "border-slate-300/60 shadow-black/20";

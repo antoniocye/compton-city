@@ -66,11 +66,13 @@ export default function HeatmapMap({
   themeRef.current     = theme;
 
   const applyHeatmapPaint = useCallback((map: maplibregl.Map, s: HeatmapSettings) => {
-    if (!map.getLayer("heatmap-layer")) return;
-    map.setPaintProperty("heatmap-layer", "heatmap-color",     buildHeatmapColorExpr(s.colorScheme));
-    map.setPaintProperty("heatmap-layer", "heatmap-opacity",   s.opacity);
-    map.setPaintProperty("heatmap-layer", "heatmap-radius",    ["interpolate", ["linear"], ["zoom"], 0, 2, 13, s.radius * 0.6,  16, s.radius * 1.4]);
-    map.setPaintProperty("heatmap-layer", "heatmap-intensity", ["interpolate", ["linear"], ["zoom"], 0, 0.5, 13, s.intensity, 16, s.intensity * 1.5]);
+    try {
+      if (!map.getLayer("heatmap-layer")) return;
+      map.setPaintProperty("heatmap-layer", "heatmap-color",     buildHeatmapColorExpr(s.colorScheme));
+      map.setPaintProperty("heatmap-layer", "heatmap-opacity",   s.opacity);
+      map.setPaintProperty("heatmap-layer", "heatmap-radius",    ["interpolate", ["linear"], ["zoom"], 0, 2, 13, s.radius * 0.6,  16, s.radius * 1.4]);
+      map.setPaintProperty("heatmap-layer", "heatmap-intensity", ["interpolate", ["linear"], ["zoom"], 0, 0.5, 13, s.intensity, 16, s.intensity * 1.5]);
+    } catch { /* map may have been removed */ }
   }, []);
 
   /* ── Init ─────────────────────────────────────────────────────────── */
@@ -195,7 +197,12 @@ export default function HeatmapMap({
     });
 
     mapRef.current = map;
-    return () => { loadedRef.current = false; map.remove(); mapRef.current = null; };
+    return () => {
+      loadedRef.current = false;
+      mapRef.current = null;        // null the ref first so all effects bail immediately
+      try { map.stop(); } catch { /* ignore if already destroyed */ }
+      try { map.remove(); } catch { /* ignore */ }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -203,7 +210,9 @@ export default function HeatmapMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
-    (map.getSource("locations-src") as maplibregl.GeoJSONSource)?.setData(toGeoJSON(locations));
+    try {
+      (map.getSource("locations-src") as maplibregl.GeoJSONSource)?.setData(toGeoJSON(locations));
+    } catch { /* map may have been removed */ }
   }, [locations]);
 
   /* ── Sync settings ───────────────────────────────────────────────── */
@@ -217,12 +226,14 @@ export default function HeatmapMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
-    map.setLayoutProperty("layer-dark",  "visibility", theme === "dark"  ? "visible" : "none");
-    map.setLayoutProperty("layer-light", "visibility", theme === "light" ? "visible" : "none");
-    map.setPaintProperty("compton-mask",        "fill-color",   MASK_COLOR[theme]);
-    map.setPaintProperty("compton-mask",        "fill-opacity", MASK_OPACITY[theme]);
-    map.setPaintProperty("compton-border-glow", "line-color",   BORDER[theme].glow);
-    map.setPaintProperty("compton-border-line", "line-color",   BORDER[theme].line);
+    try {
+      map.setLayoutProperty("layer-dark",  "visibility", theme === "dark"  ? "visible" : "none");
+      map.setLayoutProperty("layer-light", "visibility", theme === "light" ? "visible" : "none");
+      map.setPaintProperty("compton-mask",        "fill-color",   MASK_COLOR[theme]);
+      map.setPaintProperty("compton-mask",        "fill-opacity", MASK_OPACITY[theme]);
+      map.setPaintProperty("compton-border-glow", "line-color",   BORDER[theme].glow);
+      map.setPaintProperty("compton-border-line", "line-color",   BORDER[theme].line);
+    } catch { /* map may have been removed */ }
   }, [theme]);
 
   return <div ref={containerRef} className="w-full h-full" />;
