@@ -3,7 +3,13 @@
 import { useEffect, useRef, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Location, HeatmapSettings, COLOR_SCHEMES, Theme } from "@/lib/types";
+import {
+  ARTIFACT_TYPE_META,
+  HeatmapSettings,
+  COLOR_SCHEMES,
+  Theme,
+  LocationSummary,
+} from "@/lib/types";
 import {
   COMPTON_MASK_GEOJSON,
   COMPTON_BORDER_GEOJSON,
@@ -11,13 +17,13 @@ import {
 } from "@/lib/comptonBoundary";
 
 interface HeatmapMapProps {
-  locations: Location[];
+  summaries: LocationSummary[];
   settings: HeatmapSettings;
   theme: Theme;
   /** Fired on general map clicks (fill add-form) */
   onMapClick?: (lat: number, lng: number) => void;
   /** Fired when a known location dot is clicked */
-  onLocationClick?: (lat: number, lng: number, label: string) => void;
+  onLocationClick?: (locationId: string) => void;
 }
 
 function buildHeatmapColorExpr(
@@ -30,15 +36,43 @@ function buildHeatmapColorExpr(
   return expr as maplibregl.ExpressionSpecification;
 }
 
-function toGeoJSON(locations: Location[]): GeoJSON.FeatureCollection {
+function toGeoJSON(summaries: LocationSummary[]): GeoJSON.FeatureCollection {
   return {
     type: "FeatureCollection",
-    features: locations.map(loc => ({
+    features: summaries.map((summary) => ({
       type: "Feature",
-      geometry: { type: "Point", coordinates: [loc.lng, loc.lat] },
-      properties: { weight: loc.weight, label: loc.label },
+      geometry: {
+        type: "Point",
+        coordinates: [summary.location.lng, summary.location.lat],
+      },
+      properties: {
+        locationId: summary.location.id,
+        label: summary.location.name,
+        artifactCount: summary.artifactCount,
+        totalWeight: summary.totalWeight,
+        weight: summary.normalizedWeight,
+        dominantColor: ARTIFACT_TYPE_META[summary.dominantTypes[0]].accent,
+        dominantTypes: summary.dominantTypes
+          .map((type) => ARTIFACT_TYPE_META[type].label)
+          .join(" · "),
+      },
     })),
   };
+}
+
+function buildTooltipHtml(props: maplibregl.MapGeoJSONFeature["properties"]) {
+  const label = props?.label ?? "Location";
+  const artifactCount = props?.artifactCount ?? 0;
+  const dominantTypes = String(props?.dominantTypes ?? "");
+  const totalWeight = Number(props?.totalWeight ?? 0);
+
+  return `
+    <div class="tooltip-content" style="min-width: 180px">
+      <strong style="display:block">${label}</strong>
+      <span style="display:block;margin-top:4px">${artifactCount} artifact${artifactCount === 1 ? "" : "s"} · heat ${totalWeight.toFixed(2)}</span>
+      <span style="display:block;margin-top:6px;opacity:.85">${dominantTypes}</span>
+    </div>
+  `;
 }
 
 const MASK_COLOR: Record<Theme, string> = {
@@ -52,16 +86,20 @@ const BORDER: Record<Theme, { glow: string; line: string }> = {
 };
 
 export default function HeatmapMap({
-  locations, settings, theme, onMapClick, onLocationClick,
+  summaries,
+  settings,
+  theme,
+  onMapClick,
+  onLocationClick,
 }: HeatmapMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<maplibregl.Map | null>(null);
   const loadedRef    = useRef(false);
 
-  const locationsRef = useRef(locations);
+  const summariesRef = useRef(summaries);
   const settingsRef  = useRef(settings);
   const themeRef     = useRef(theme);
-  locationsRef.current = locations;
+  summariesRef.current = summaries;
   settingsRef.current  = settings;
   themeRef.current     = theme;
 
@@ -135,7 +173,7 @@ export default function HeatmapMap({
       }});
 
       /* Heatmap */
-      map.addSource("locations-src", { type: "geojson", data: toGeoJSON(locationsRef.current) });
+      map.addSource("locations-src", { type: "geojson", data: toGeoJSON(summariesRef.current) });
       map.addLayer({
         id: "heatmap-layer", type: "heatmap", source: "locations-src",
         paint: {
@@ -147,27 +185,48 @@ export default function HeatmapMap({
         },
       });
 
-      /* Dot layer (high zoom) */
+      /* Artifact location dots (high zoom) */
       map.addLayer({
         id: "dot-layer", type: "circle", source: "locations-src", minzoom: 14,
         paint: {
-          "circle-radius":        ["interpolate", ["linear"], ["zoom"], 14, 3, 18, 14],
-          "circle-color":         "#ffffff",
+          "circle-radius": [
+            "interpolate", ["linear"], ["zoom"],
+            14, ["interpolate", ["linear"], ["get", "artifactCount"], 1, 5, 4, 11],
+            18, ["interpolate", ["linear"], ["get", "artifactCount"], 1, 10, 4, 18],
+          ],
+          "circle-color":         theme === "dark" ? "#f8fafc" : "#ffffff",
           "circle-opacity":       ["interpolate", ["linear"], ["zoom"], 14, 0, 15.5, 0.9],
-          "circle-stroke-color":  "#22d3ee",
-          "circle-stroke-width":  1.8,
+          "circle-stroke-color":  ["coalesce", ["get", "dominantColor"], "#22d3ee"],
+          "circle-stroke-width":  2.5,
+        },
+      });
+      map.addLayer({
+        id: "count-layer",
+        type: "symbol",
+        source: "locations-src",
+        minzoom: 15,
+        filter: [">", ["get", "artifactCount"], 1],
+        layout: {
+          "text-field": ["to-string", ["get", "artifactCount"]],
+          "text-size": 10,
+          "text-font": ["Open Sans Bold"],
+        },
+        paint: {
+          "text-color": theme === "dark" ? "#020617" : "#0f172a",
+          "text-halo-color": theme === "dark" ? "#f8fafc" : "#ffffff",
+          "text-halo-width": 1.25,
         },
       });
 
       /* Tooltip */
       const tooltip = new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "heatmap-tooltip" });
-      map.on("mouseenter", "dot-layer", e => {
+      map.on("mouseenter", "dot-layer", (e) => {
         map.getCanvas().style.cursor = "pointer";
         if (e.features?.[0]) {
           const p = e.features[0].properties;
           const c = (e.features[0].geometry as GeoJSON.Point).coordinates;
           tooltip.setLngLat([c[0], c[1]])
-            .setHTML(`<div class="tooltip-content"><strong>${p.label || "Location"}</strong><span>${c[1].toFixed(5)}, ${c[0].toFixed(5)}</span></div>`)
+            .setHTML(buildTooltipHtml(p))
             .addTo(map);
         }
       });
@@ -180,11 +239,10 @@ export default function HeatmapMap({
     /* ── Click handlers ───────────────────────────────────────────────── */
 
     // Click on a known location dot → fire onLocationClick
-    map.on("click", "dot-layer", e => {
+    map.on("click", "dot-layer", (e) => {
       if (!e.features?.[0]) return;
       const p = e.features[0].properties;
-      const c = (e.features[0].geometry as GeoJSON.Point).coordinates;
-      onLocationClick?.(c[1], c[0], p.label || "Location");
+      if (p?.locationId) onLocationClick?.(String(p.locationId));
       e.originalEvent.stopPropagation();
     });
 
@@ -206,14 +264,14 @@ export default function HeatmapMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ── Sync locations ──────────────────────────────────────────────── */
+  /* ── Sync summaries ──────────────────────────────────────────────── */
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
     try {
-      (map.getSource("locations-src") as maplibregl.GeoJSONSource)?.setData(toGeoJSON(locations));
+      (map.getSource("locations-src") as maplibregl.GeoJSONSource)?.setData(toGeoJSON(summaries));
     } catch { /* map may have been removed */ }
-  }, [locations]);
+  }, [summaries]);
 
   /* ── Sync settings ───────────────────────────────────────────────── */
   useEffect(() => {
@@ -233,6 +291,9 @@ export default function HeatmapMap({
       map.setPaintProperty("compton-mask",        "fill-opacity", MASK_OPACITY[theme]);
       map.setPaintProperty("compton-border-glow", "line-color",   BORDER[theme].glow);
       map.setPaintProperty("compton-border-line", "line-color",   BORDER[theme].line);
+      map.setPaintProperty("dot-layer", "circle-color", theme === "dark" ? "#f8fafc" : "#ffffff");
+      map.setPaintProperty("count-layer", "text-color", theme === "dark" ? "#020617" : "#0f172a");
+      map.setPaintProperty("count-layer", "text-halo-color", theme === "dark" ? "#f8fafc" : "#ffffff");
     } catch { /* map may have been removed */ }
   }, [theme]);
 

@@ -1,17 +1,28 @@
 "use client";
 
-import { Theme, StreetViewLocation } from "@/lib/types";
+import { ArtifactType, StreetViewLocation, Theme } from "@/lib/types";
 
 interface Props {
   location: StreetViewLocation;
   theme: Theme;
   showPins: boolean;
+  artifactCount: number;
+  activeTypes: ArtifactType[];
   onClose: () => void;
   onToggleTheme: () => void;
   onTogglePins: () => void;
 }
 
-export default function StreetViewHeader({ location, theme, showPins, onClose, onToggleTheme, onTogglePins }: Props) {
+export default function StreetViewHeader({
+  location,
+  theme,
+  showPins,
+  artifactCount,
+  activeTypes,
+  onClose,
+  onToggleTheme,
+  onTogglePins,
+}: Props) {
   const isDark = theme === "dark";
 
   const externalUrl = `https://www.google.com/maps?q=${location.lat},${location.lng}&layer=c&cbll=${location.lat},${location.lng}`;
@@ -55,6 +66,9 @@ export default function StreetViewHeader({ location, theme, showPins, onClose, o
             <p className={`text-[10px] font-mono mt-0.5 ${isDark ? "text-slate-600" : "text-slate-400"}`}>
               {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
             </p>
+            <p className={`text-[10px] mt-1 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+              {artifactCount} visible artifact{artifactCount !== 1 ? "s" : ""} · {activeTypes.length} type filter{activeTypes.length !== 1 ? "s" : ""}
+            </p>
           </div>
         </div>
       </div>
@@ -74,7 +88,7 @@ export default function StreetViewHeader({ location, theme, showPins, onClose, o
           Google Maps
         </a>
 
-        {/* Pins toggle */}
+        {/* Artifact toggle */}
         <button
           onClick={onTogglePins}
           className={`flex items-center gap-1.5 h-9 px-3 rounded-xl border backdrop-blur-xl transition-all duration-200 text-xs font-semibold ${
@@ -84,12 +98,12 @@ export default function StreetViewHeader({ location, theme, showPins, onClose, o
                 : "bg-sky-500/10 border-sky-400/50 text-sky-700"
               : iconBtnCls
           }`}
-          title={showPins ? "Hide location pins" : "Show location pins"}
+          title={showPins ? "Hide artifact pins" : "Show artifact pins"}
         >
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
           </svg>
-          Pins
+          Artifacts
         </button>
 
         {/* Theme toggle */}

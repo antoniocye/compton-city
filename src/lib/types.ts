@@ -1,20 +1,127 @@
 export type Theme = "dark" | "light";
 
+export type ArtifactType =
+  | "lyric-snippet"
+  | "image"
+  | "music-video"
+  | "film-snippet";
+
+export const ARTIFACT_TYPES: ArtifactType[] = [
+  "lyric-snippet",
+  "image",
+  "music-video",
+  "film-snippet",
+];
+
+export const ARTIFACT_TYPE_META: Record<
+  ArtifactType,
+  { label: string; shortLabel: string; accent: string }
+> = {
+  "lyric-snippet": {
+    label: "Lyric Snippet",
+    shortLabel: "LYR",
+    accent: "#22d3ee",
+  },
+  image: {
+    label: "Image",
+    shortLabel: "IMG",
+    accent: "#f59e0b",
+  },
+  "music-video": {
+    label: "Music Video",
+    shortLabel: "VID",
+    accent: "#a855f7",
+  },
+  "film-snippet": {
+    label: "Film / Doc",
+    shortLabel: "FILM",
+    accent: "#fb7185",
+  },
+};
+
 export interface StreetViewLocation {
+  locationId?: string;
   lat: number;
   lng: number;
   label: string;
+  artifactCount?: number;
   /** Initial camera heading (degrees, 0 = north). Set when teleporting so the
    *  panorama opens facing back toward the location you came from. */
   heading?: number;
 }
 
-export interface Location {
+export interface LocationNode {
   id: string;
   lat: number;
   lng: number;
-  label: string;
-  weight: number;
+  name: string;
+  neighborhood?: string;
+  aliases?: string[];
+}
+
+export type ArtifactResource =
+  | {
+      kind: "spotify";
+      url: string;
+      startMs?: number;
+    }
+  | {
+      kind: "youtube";
+      url: string;
+      startSeconds?: number;
+      endSeconds?: number;
+    }
+  | {
+      kind: "image";
+      imageUrl?: string;
+      sourceUrl?: string;
+      credit?: string;
+    }
+  | {
+      kind: "external";
+      url: string;
+      label: string;
+    };
+
+export interface CulturalArtifact {
+  id: string;
+  type: ArtifactType;
+  locationId: string;
+  title: string;
+  creator: string;
+  sourceTitle?: string;
+  year?: number;
+  caption?: string;
+  description?: string;
+  tags?: string[];
+  heatWeight: number;
+  thumbnailUrl?: string;
+  resource: ArtifactResource;
+}
+
+export interface LocationSummary {
+  id: string;
+  location: LocationNode;
+  artifacts: CulturalArtifact[];
+  artifactCount: number;
+  totalWeight: number;
+  normalizedWeight: number;
+  dominantTypes: ArtifactType[];
+}
+
+export interface NewArtifactInput {
+  lat: number;
+  lng: number;
+  locationName: string;
+  type: ArtifactType;
+  title: string;
+  creator: string;
+  sourceTitle?: string;
+  year?: number;
+  caption?: string;
+  description?: string;
+  heatWeight: number;
+  resource: ArtifactResource;
 }
 
 export interface HeatmapSettings {

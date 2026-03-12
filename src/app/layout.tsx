@@ -8,8 +8,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Compton Heat — Location Heatmap",
-  description: "Visualize location density across Compton, CA",
+  title: "Compton Heat — Cultural Artifact Map",
+  description:
+    "Explore lyrics, images, music videos, and film references tied to locations across Compton, CA.",
 };
 
 export default function RootLayout({

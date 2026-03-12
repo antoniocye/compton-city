@@ -1,9 +1,11 @@
 "use client";
 
-import { Location, Theme } from "@/lib/types";
+import { Theme } from "@/lib/types";
 
 interface HeaderProps {
-  locations: Location[];
+  locationCount: number;
+  artifactCount: number;
+  totalWeight: number;
   theme: Theme;
   onToggleTheme: () => void;
   onClearAll: () => void;
@@ -12,14 +14,15 @@ interface HeaderProps {
 }
 
 export default function Header({
-  locations,
+  locationCount,
+  artifactCount,
+  totalWeight,
   theme,
   onToggleTheme,
   onClearAll,
   sidebarOpen,
   onToggleSidebar,
 }: HeaderProps) {
-  const totalWeight = locations.reduce((acc, l) => acc + l.weight, 0);
   const isDark = theme === "dark";
 
   /* ── Shared variants ───────────────────────────────────────────────── */
@@ -64,20 +67,29 @@ export default function Header({
             </span>
           </div>
           <p className={`text-[9px] tracking-[0.18em] uppercase mt-0.5 ${muted}`}>
-            Location Heatmap
+            Cultural Artifact Heatmap
           </p>
         </div>
       </div>
 
       {/* ── Right: stats + controls ── */}
       <div className="flex items-center gap-2 pointer-events-auto">
-        {/* Points */}
+        {/* Locations */}
         <div className={`flex items-center gap-2 border backdrop-blur-xl rounded-xl px-3 py-2 transition-all duration-300 ${chip}`}>
           <svg className={`w-3.5 h-3.5 shrink-0 ${isDark ? "text-cyan-400" : "text-sky-500"}`} fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
           </svg>
-          <span className="text-sm font-bold tabular-nums">{locations.length}</span>
-          <span className={`text-xs ${muted}`}>pts</span>
+          <span className="text-sm font-bold tabular-nums">{locationCount}</span>
+          <span className={`text-xs ${muted}`}>locs</span>
+        </div>
+
+        {/* Artifacts */}
+        <div className={`flex items-center gap-2 border backdrop-blur-xl rounded-xl px-3 py-2 transition-all duration-300 ${chip}`}>
+          <svg className="w-3.5 h-3.5 text-fuchsia-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-2v13M9 19a2 2 0 11-4 0 2 2 0 014 0zm12-2a2 2 0 11-4 0 2 2 0 014 0zM9 10l12-2" />
+          </svg>
+          <span className="text-sm font-bold tabular-nums">{artifactCount}</span>
+          <span className={`text-xs ${muted}`}>arts</span>
         </div>
 
         {/* Weight */}
@@ -108,7 +120,7 @@ export default function Header({
         </button>
 
         {/* Clear all */}
-        {locations.length > 0 && (
+        {artifactCount > 0 && (
           <button
             onClick={onClearAll}
             className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/25 backdrop-blur-xl rounded-xl px-3 py-2 text-red-400 hover:bg-red-500/20 hover:border-red-400/50 transition-all duration-200 text-xs font-semibold shadow-lg shadow-black/30"

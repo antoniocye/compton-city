@@ -1,6 +1,12 @@
 "use client";
 
-import { HeatmapSettings, Theme } from "@/lib/types";
+import {
+  ARTIFACT_TYPE_META,
+  ARTIFACT_TYPES,
+  ArtifactType,
+  HeatmapSettings,
+  Theme,
+} from "@/lib/types";
 
 const GRADIENTS: Record<HeatmapSettings["colorScheme"], string> = {
   fire:    "linear-gradient(to right, #2e0060, #9b0000, #ff6000, #ffd000, #fff8c0)",
@@ -12,9 +18,11 @@ const GRADIENTS: Record<HeatmapSettings["colorScheme"], string> = {
 export default function Legend({
   colorScheme,
   theme,
+  activeTypes,
 }: {
   colorScheme: HeatmapSettings["colorScheme"];
   theme: Theme;
+  activeTypes: ArtifactType[];
 }) {
   const isDark = theme === "dark";
   return (
@@ -30,6 +38,40 @@ export default function Legend({
         <span className={`text-[10px] ${isDark ? "text-slate-600" : "text-slate-400"}`}>Low</span>
         <div className="w-28 h-2 rounded-full" style={{ background: GRADIENTS[colorScheme] }} />
         <span className={`text-[10px] ${isDark ? "text-slate-600" : "text-slate-400"}`}>High</span>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-2">
+        <p className={`text-[9px] uppercase tracking-[0.16em] font-semibold ${isDark ? "text-slate-600" : "text-slate-400"}`}>
+          Artifact Types
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {ARTIFACT_TYPES.map((type) => {
+            const meta = ARTIFACT_TYPE_META[type];
+            const active = activeTypes.includes(type);
+            return (
+              <div
+                key={type}
+                className={`flex items-center gap-2 rounded-xl px-2.5 py-2 border ${
+                  active
+                    ? isDark
+                      ? "bg-white/[0.03] border-white/[0.08]"
+                      : "bg-slate-50 border-slate-200"
+                    : isDark
+                      ? "opacity-45 border-white/[0.05]"
+                      : "opacity-55 border-slate-200"
+                }`}
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: meta.accent }}
+                />
+                <span className={`text-[10px] font-medium ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                  {meta.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

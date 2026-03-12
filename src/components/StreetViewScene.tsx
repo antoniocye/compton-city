@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
-import { Theme, Location } from "@/lib/types";
+import {
+  ARTIFACT_TYPE_META,
+  LocationSummary,
+  Theme,
+} from "@/lib/types";
 
 declare global {
   interface Window { gm_authFailure?: () => void }
@@ -21,13 +25,16 @@ type SceneState = "loading" | "ready" | "no-coverage" | "no-key" | "auth-error" 
 interface Props {
   lat: number;
   lng: number;
-  /** Initial camera heading (degrees). Passed when teleporting to a pin so the
-   *  panorama opens facing back toward the previous location. */
-  heading?: number;
   theme: Theme;
-  locations: Location[];
+  summaries: LocationSummary[];
   showPins: boolean;
-  onPinClick?: (lat: number, lng: number, label: string) => void;
+  selectedLocationId?: string | null;
+  onPinClick?: (
+    locationId: string,
+    lat: number,
+    lng: number,
+    label: string
+  ) => void;
 }
 
 // ── Tunable pin lift ───────────────────────────────────────────────
@@ -92,13 +99,45 @@ function ensureAnimation() {
 }
 
 /* ── Build the pin DOM element ─────────────────────────────────────── */
-function makePinEl(label: string, isDark: boolean): HTMLDivElement {
+function makePinEl(
+  summary: LocationSummary,
+  isDark: boolean,
+  selected: boolean
+): HTMLDivElement {
   ensureAnimation();
   const ring  = isDark ? "rgba(34,211,238,0.35)"  : "rgba(2,132,199,0.3)";
-  const dot   = isDark ? "#22d3ee"                 : "#0284c7";
+  const dot   = selected
+    ? "#f8fafc"
+    : isDark
+      ? "#22d3ee"
+      : "#0284c7";
   const chipBg= isDark ? "rgba(7,12,26,0.93)"      : "rgba(255,255,255,0.96)";
   const chipTx= isDark ? "#f1f5f9"                 : "#0f172a";
-  const chipBr= isDark ? "rgba(34,211,238,0.35)"   : "rgba(2,132,199,0.3)";
+  const chipBr= selected
+    ? "rgba(248,250,252,0.6)"
+    : isDark
+      ? "rgba(34,211,238,0.35)"
+      : "rgba(2,132,199,0.3)";
+  const typeRow = summary.dominantTypes
+    .slice(0, 2)
+    .map((type) => {
+      const meta = ARTIFACT_TYPE_META[type];
+      return `<span style="
+        display:inline-flex;align-items:center;justify-content:center;
+        padding:2px 6px;border-radius:999px;font-size:9px;font-weight:800;
+        letter-spacing:.12em;text-transform:uppercase;
+        color:${meta.accent};background:${meta.accent}20;border:1px solid ${meta.accent}55;
+      ">${meta.shortLabel}</span>`;
+    })
+    .join("");
+  const countBadge = summary.artifactCount > 1
+    ? `<span style="
+        display:inline-flex;align-items:center;justify-content:center;
+        padding:2px 6px;border-radius:999px;font-size:9px;font-weight:800;
+        letter-spacing:.12em;text-transform:uppercase;
+        color:${chipTx};background:${isDark ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.08)"};
+      ">${summary.artifactCount}X</span>`
+    : "";
 
   const el = document.createElement("div");
   el.style.cssText = `
@@ -114,14 +153,19 @@ function makePinEl(label: string, isDark: boolean): HTMLDivElement {
       <div style="
         background:${chipBg};color:${chipTx};
         border:1px solid ${chipBr};
-        border-radius:10px;padding:5px 11px;
+        border-radius:12px;padding:7px 11px;
         font-size:12px;font-weight:700;
         font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;
-        white-space:nowrap;letter-spacing:-.01em;
+        letter-spacing:-.01em;
         backdrop-filter:blur(14px);
         box-shadow:0 6px 28px rgba(0,0,0,.55);
         user-select:none;-webkit-user-select:none;
-      ">${label}</div>
+      ">
+        <div style="white-space:nowrap;">${summary.location.name}</div>
+        <div style="display:flex;gap:4px;justify-content:center;margin-top:6px;">
+          ${typeRow}${countBadge}
+        </div>
+      </div>
       <div style="
         width:1.5px;height:22px;
         background:linear-gradient(to bottom,${dot},transparent);
@@ -143,19 +187,30 @@ class StreetViewPin {
 
   constructor(
     pos: google.maps.LatLng,
-    label: string,
+    summary: LocationSummary,
     isDark: boolean,
+    selected: boolean,
     panorama: google.maps.StreetViewPanorama,
     container: HTMLDivElement,
-    onPinClick?: (lat: number, lng: number, label: string) => void
+    onPinClick?: (
+      locationId: string,
+      lat: number,
+      lng: number,
+      label: string
+    ) => void
   ) {
-    this.el = makePinEl(label, isDark);
+    this.el = makePinEl(summary, isDark, selected);
     const el = this.el;
 
     if (onPinClick) {
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        onPinClick(pos.lat(), pos.lng(), label);
+        onPinClick(
+          summary.location.id,
+          pos.lat(),
+          pos.lng(),
+          summary.location.name
+        );
       });
     }
 
@@ -226,7 +281,15 @@ class StreetViewPin {
 }
 
 /* ── Main component ────────────────────────────────────────────────── */
-export default function StreetViewScene({ lat, lng, heading, theme, locations, showPins, onPinClick }: Props) {
+export default function StreetViewScene({
+  lat,
+  lng,
+  theme,
+  summaries,
+  showPins,
+  selectedLocationId,
+  onPinClick,
+}: Props) {
   const containerRef  = useRef<HTMLDivElement>(null);
   const panoramaRef   = useRef<google.maps.StreetViewPanorama | null>(null);
   const pinsRef       = useRef<StreetViewPin[]>([]);
@@ -297,7 +360,14 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
               initialHeadingApplied = true;
               pano.setPov({ heading: targetHeading, pitch: 0 });
             }
-            buildPins(pano, locations, isDark, showPins, onPinClick);
+            buildPins(
+              pano,
+              summaries,
+              isDark,
+              showPins,
+              selectedLocationId ?? null,
+              onPinClick
+            );
           });
           setState("ready");
         });
@@ -314,6 +384,19 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lng]);
 
+  useEffect(() => {
+    const pano = panoramaRef.current;
+    if (!pano || state !== "ready") return;
+    buildPins(
+      pano,
+      summaries,
+      isDark,
+      showPins,
+      selectedLocationId ?? null,
+      onPinClick
+    );
+  }, [summaries, showPins, isDark, selectedLocationId, onPinClick, state]);
+
   /* ── Sync pin visibility ─────────────────────────────────────────── */
   useEffect(() => {
     pinsRef.current.forEach(p => p.setVisible(showPins));
@@ -322,19 +405,33 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
   /* ── Build / rebuild pins ────────────────────────────────────────── */
   function buildPins(
     pano: google.maps.StreetViewPanorama,
-    locs: Location[],
+    locationSummaries: LocationSummary[],
     dark: boolean,
     visible: boolean,
-    clickCb?: (lat: number, lng: number, label: string) => void
+    selectedId: string | null,
+    clickCb?: (
+      locationId: string,
+      lat: number,
+      lng: number,
+      label: string
+    ) => void
   ) {
     pinsRef.current.forEach(p => p.remove());
     pinsRef.current = [];
     if (!containerRef.current) return;
     const cont = containerRef.current;
     const gmLatLng = (window as unknown as { google: typeof google }).google.maps.LatLng;
-    locs.forEach(loc => {
-      const posObj = new gmLatLng(loc.lat, loc.lng);
-      const pin = new StreetViewPin(posObj, loc.label, dark, pano, cont, clickCb);
+    locationSummaries.forEach((summary) => {
+      const posObj = new gmLatLng(summary.location.lat, summary.location.lng);
+      const pin = new StreetViewPin(
+        posObj,
+        summary,
+        dark,
+        selectedId === summary.location.id,
+        pano,
+        cont,
+        clickCb
+      );
       if (!visible) pin.setVisible(false);
       pinsRef.current.push(pin);
     });
