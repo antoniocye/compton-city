@@ -38,14 +38,16 @@ function distanceM(lat1: number, lng1: number, lat2: number, lng2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function nearestLabel(lat: number, lng: number, locs: Location[]): string {
-  let best: Location | null = null;
-  let bestD = Infinity;
-  for (const l of locs) {
-    const d = distanceM(lat, lng, l.lat, l.lng);
-    if (d < bestD) { bestD = d; best = l; }
+/** Returns the closest Location in the list to (lat, lng) */
+function findNearest(lat: number, lng: number, locs: Location[]): Location | null {
+  if (!locs.length) return null;
+  let best = locs[0];
+  let bestD = distanceM(lat, lng, best.lat, best.lng);
+  for (let i = 1; i < locs.length; i++) {
+    const d = distanceM(lat, lng, locs[i].lat, locs[i].lng);
+    if (d < bestD) { bestD = d; best = locs[i]; }
   }
-  return best && bestD < 300 ? best.label : `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  return best;
 }
 
 export default function Home() {
@@ -73,22 +75,37 @@ export default function Home() {
     setLocations(p => p.filter(l => l.id !== id));
   }, []);
 
-  // General map click → fill form + open street view
+  // General map click → fill form + snap street view to nearest location
   const handleMapClick = useCallback((lat: number, lng: number) => {
     setPending({ lat, lng });
     setSidebarOpen(true);
-    setStreetView({ lat, lng, label: nearestLabel(lat, lng, locations) });
+    const nearest = findNearest(lat, lng, locations);
+    if (nearest) {
+      setStreetView({ lat: nearest.lat, lng: nearest.lng, label: nearest.label });
+    } else {
+      setStreetView({ lat, lng, label: `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
+    }
   }, [locations]);
 
-  // Dot click → open street view with known label
+  // Dot click → open street view with known label (exact position)
   const handleLocationClick = useCallback((lat: number, lng: number, label: string) => {
     setStreetView({ lat, lng, label });
   }, []);
 
-  // Mini-map click → teleport street view to that spot
+  // Mini-map click → snap to nearest location
   const handleTeleport = useCallback((lat: number, lng: number) => {
-    setStreetView({ lat, lng, label: nearestLabel(lat, lng, locations) });
+    const nearest = findNearest(lat, lng, locations);
+    if (nearest) {
+      setStreetView({ lat: nearest.lat, lng: nearest.lng, label: nearest.label });
+    } else {
+      setStreetView({ lat, lng, label: `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
+    }
   }, [locations]);
+
+  // Pin click in Street View → jump to that pin's exact location
+  const handlePinClick = useCallback((lat: number, lng: number, label: string) => {
+    setStreetView({ lat, lng, label });
+  }, []);
 
   const inStreetView = streetView !== null;
 
@@ -144,6 +161,7 @@ export default function Home() {
             theme={theme}
             locations={locations}
             showPins={showPins}
+            onPinClick={handlePinClick}
           />
 
           {/* Top header overlay */}

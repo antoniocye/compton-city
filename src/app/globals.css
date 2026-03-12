@@ -10,6 +10,15 @@ html, body {
   height: 100%;
   overflow: hidden;
   background: #06091a;
+  /* Prevent accidental text selection on clicks throughout the UI */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Re-enable selection only where the user needs to type */
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* ── MapLibre overrides ── */

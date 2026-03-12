@@ -24,6 +24,7 @@ interface Props {
   theme: Theme;
   locations: Location[];
   showPins: boolean;
+  onPinClick?: (lat: number, lng: number, label: string) => void;
 }
 
 /* ── Distance → scale ─────────────────────────────────────────────── */
@@ -76,8 +77,6 @@ function makePinEl(label: string, isDark: boolean): HTMLDivElement {
   const chipTx= isDark ? "#f1f5f9"                 : "#0f172a";
   const chipBr= isDark ? "rgba(34,211,238,0.35)"   : "rgba(2,132,199,0.3)";
 
-  // Container: handles absolute position + scale (NO animation here so
-  // scale transform doesn't fight with svFloat)
   const el = document.createElement("div");
   el.style.cssText = `
     position: absolute;
@@ -87,9 +86,6 @@ function makePinEl(label: string, isDark: boolean): HTMLDivElement {
     transform-origin: bottom center;
     transition: transform 0.2s ease, opacity 0.2s ease;
   `;
-
-  // Inner div: handles translate(-50%,-100%) AND the float animation
-  // (combined in the keyframe so both work simultaneously)
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;
                 animation:svFloat 2.8s ease-in-out infinite;">
@@ -102,6 +98,7 @@ function makePinEl(label: string, isDark: boolean): HTMLDivElement {
         white-space:nowrap;letter-spacing:-.01em;
         backdrop-filter:blur(14px);
         box-shadow:0 6px 28px rgba(0,0,0,.55);
+        user-select:none;-webkit-user-select:none;
       ">${label}</div>
       <div style="
         width:1.5px;height:22px;
@@ -127,12 +124,19 @@ class StreetViewPin {
     label: string,
     isDark: boolean,
     panorama: google.maps.StreetViewPanorama,
-    container: HTMLDivElement
+    container: HTMLDivElement,
+    onPinClick?: (lat: number, lng: number, label: string) => void
   ) {
     this.el = makePinEl(label, isDark);
     const el = this.el;
 
-    // We need google.maps.OverlayView — grab it from the global
+    if (onPinClick) {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onPinClick(pos.lat(), pos.lng(), label);
+      });
+    }
+
     const OV = (window as unknown as { google: typeof google }).google.maps.OverlayView;
 
     class PinOverlay extends OV {
@@ -145,18 +149,29 @@ class StreetViewPin {
         const px = proj.fromLatLngToContainerPixel(pos);
         if (!px) { el.style.visibility = "hidden"; return; }
 
+        const w = container.offsetWidth;
+        const h = container.offsetHeight;
+
         // ── Distance-based scale ───────────────────────────────────
         const panoPos = (this.getMap() as google.maps.StreetViewPanorama)?.getPosition();
         let scale = 1;
+        let dist  = 0;
         if (panoPos) {
-          const d = haversineM(panoPos.lat(), panoPos.lng(), pos.lat(), pos.lng());
-          scale = distanceToScale(d);
+          dist  = haversineM(panoPos.lat(), panoPos.lng(), pos.lat(), pos.lng());
+          scale = distanceToScale(dist);
           if (scale === 0) { el.style.visibility = "hidden"; return; }
         }
 
+        // ── Ground-sinking fix ────────────────────────────────────
+        // Distant pins project to near/below the horizon (lower ~38% of screen).
+        // Showing them there makes them appear to float in the road surface.
+        // Hide any pin beyond 30 m whose anchor falls in the lower 40% of the frame.
+        if (dist > 30 && px.y > h * 0.60) {
+          el.style.visibility = "hidden";
+          return;
+        }
+
         // ── Viewport culling (behind camera) ──────────────────────
-        const w = container.offsetWidth;
-        const h = container.offsetHeight;
         if (px.x < -300 || px.x > w + 300 || px.y < -300 || px.y > h + 300) {
           el.style.visibility = "hidden";
           return;
@@ -164,9 +179,8 @@ class StreetViewPin {
 
         // ── Position + scale + opacity ────────────────────────────
         el.style.visibility = "visible";
-        el.style.left    = `${px.x}px`;
-        el.style.top     = `${px.y}px`;
-        // scale from ground point; opacity fades with distance
+        el.style.left      = `${px.x}px`;
+        el.style.top       = `${px.y}px`;
         el.style.transform = `scale(${scale})`;
         el.style.opacity   = String(Math.min(1, scale * 1.4));
       }
@@ -187,7 +201,7 @@ class StreetViewPin {
 }
 
 /* ── Main component ────────────────────────────────────────────────── */
-export default function StreetViewScene({ lat, lng, theme, locations, showPins }: Props) {
+export default function StreetViewScene({ lat, lng, theme, locations, showPins, onPinClick }: Props) {
   const containerRef  = useRef<HTMLDivElement>(null);
   const panoramaRef   = useRef<google.maps.StreetViewPanorama | null>(null);
   const pinsRef       = useRef<StreetViewPin[]>([]);
@@ -232,9 +246,8 @@ export default function StreetViewScene({ lat, lng, theme, locations, showPins }
           });
           panoramaRef.current = pano;
 
-          // Add pins once the panorama tiles load
           pano.addListener("status_changed", () => {
-            buildPins(pano, locations, isDark, showPins);
+            buildPins(pano, locations, isDark, showPins, onPinClick);
           });
           setState("ready");
         });
@@ -260,15 +273,17 @@ export default function StreetViewScene({ lat, lng, theme, locations, showPins }
     pano: google.maps.StreetViewPanorama,
     locs: Location[],
     dark: boolean,
-    visible: boolean
+    visible: boolean,
+    clickCb?: (lat: number, lng: number, label: string) => void
   ) {
     pinsRef.current.forEach(p => p.remove());
     pinsRef.current = [];
     if (!containerRef.current) return;
     const cont = containerRef.current;
+    const gmLatLng = (window as unknown as { google: typeof google }).google.maps.LatLng;
     locs.forEach(loc => {
-      const pos = new (window as unknown as { google: typeof google }).google.maps.LatLng(loc.lat, loc.lng);
-      const pin = new StreetViewPin(pos, loc.label, dark, pano, cont);
+      const posObj = new gmLatLng(loc.lat, loc.lng);
+      const pin = new StreetViewPin(posObj, loc.label, dark, pano, cont, clickCb);
       if (!visible) pin.setVisible(false);
       pinsRef.current.push(pin);
     });
