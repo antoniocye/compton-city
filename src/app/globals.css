@@ -9,13 +9,11 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #06091a;
-  /* Prevent accidental text selection on clicks throughout the UI */
+  background: #0e0b09;
   -webkit-user-select: none;
   user-select: none;
 }
 
-/* Re-enable selection only where the user needs to type */
 input, textarea, [contenteditable="true"] {
   -webkit-user-select: text;
   user-select: text;
@@ -33,64 +31,64 @@ input, textarea, [contenteditable="true"] {
 .maplibregl-ctrl-attrib {
   font-size: 9px !important;
   background: rgba(0, 0, 0, 0.45) !important;
-  color: rgba(255, 255, 255, 0.25) !important;
+  color: rgba(255, 255, 255, 0.2) !important;
   border-radius: 6px !important;
 }
-.maplibregl-ctrl-attrib a { color: rgba(255, 255, 255, 0.25) !important; }
+.maplibregl-ctrl-attrib a { color: rgba(255, 255, 255, 0.2) !important; }
 
 .maplibregl-ctrl-group {
-  background: rgba(8, 12, 26, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(18, 14, 11, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
   backdrop-filter: blur(16px) !important;
   border-radius: 14px !important;
   overflow: hidden;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.55) !important;
 }
 .maplibregl-ctrl-group button {
   background-color: transparent !important;
-  border-color: rgba(255, 255, 255, 0.06) !important;
-  color: rgba(255, 255, 255, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.45) !important;
   width: 36px !important;
   height: 36px !important;
 }
 .maplibregl-ctrl-group button:hover {
-  background-color: rgba(34, 211, 238, 0.08) !important;
+  background-color: rgba(245, 158, 11, 0.10) !important;
   color: rgba(255, 255, 255, 0.9) !important;
 }
-.maplibregl-ctrl-icon { filter: invert(1) opacity(0.5); }
+.maplibregl-ctrl-icon { filter: invert(1) opacity(0.45); }
 
 /* Light mode map controls */
 .light .maplibregl-ctrl-group {
-  background: rgba(255, 255, 255, 0.92) !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+  background: rgba(253, 250, 243, 0.94) !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10) !important;
 }
 .light .maplibregl-ctrl-group button {
-  color: rgba(0, 0, 0, 0.5) !important;
-  border-color: rgba(0, 0, 0, 0.06) !important;
+  color: rgba(0, 0, 0, 0.45) !important;
+  border-color: rgba(0, 0, 0, 0.05) !important;
 }
 .light .maplibregl-ctrl-group button:hover {
-  background-color: rgba(2, 132, 199, 0.08) !important;
+  background-color: rgba(180, 120, 20, 0.08) !important;
   color: rgba(0, 0, 0, 0.85) !important;
 }
-.light .maplibregl-ctrl-icon { filter: none; opacity: 0.55; }
+.light .maplibregl-ctrl-icon { filter: none; opacity: 0.5; }
 .light .maplibregl-ctrl-attrib {
-  background: rgba(255, 255, 255, 0.8) !important;
-  color: rgba(0, 0, 0, 0.35) !important;
+  background: rgba(253, 250, 243, 0.85) !important;
+  color: rgba(0, 0, 0, 0.30) !important;
 }
-.light .maplibregl-ctrl-attrib a { color: rgba(0, 0, 0, 0.35) !important; }
+.light .maplibregl-ctrl-attrib a { color: rgba(0, 0, 0, 0.30) !important; }
 
 /* ── Tooltip ── */
 .heatmap-tooltip .maplibregl-popup-content {
-  background: rgba(8, 12, 26, 0.95) !important;
-  border: 1px solid rgba(34, 211, 238, 0.25) !important;
+  background: rgba(18, 14, 11, 0.96) !important;
+  border: 1px solid rgba(245, 158, 11, 0.22) !important;
   border-radius: 12px !important;
   padding: 0 !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(34, 211, 238, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(245, 158, 11, 0.07) !important;
   backdrop-filter: blur(20px);
 }
 .heatmap-tooltip .maplibregl-popup-tip {
-  border-top-color: rgba(34, 211, 238, 0.25) !important;
+  border-top-color: rgba(245, 158, 11, 0.22) !important;
 }
 .tooltip-content {
   display: flex;
@@ -98,22 +96,25 @@ input, textarea, [contenteditable="true"] {
   padding: 8px 12px;
   gap: 2px;
 }
-.tooltip-content strong { font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
-.tooltip-content span { font-size: 10px; color: rgba(34, 211, 238, 0.7); font-family: monospace; }
+.tooltip-content strong { font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.92); }
+.tooltip-content span   { font-size: 10px; color: rgba(245, 158, 11, 0.75); font-family: monospace; }
 
 /* ── Scrollbar ── */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.07) transparent;
 }
 .scrollbar-thin::-webkit-scrollbar { width: 3px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 99px; }
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 99px;
+}
 
 .light .scrollbar-thin {
-  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.09) transparent;
 }
-.light .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); }
+.light .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.09); }
 
 /* ── Input base ── */
 @layer components {
@@ -128,11 +129,11 @@ input, textarea, [contenteditable="true"] {
   appearance: none;
   height: 3px;
   border-radius: 99px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
   outline: none;
   cursor: pointer;
 }
-.light .slider { background: rgba(0, 0, 0, 0.1); }
+.light .slider { background: rgba(0, 0, 0, 0.09); }
 
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -140,22 +141,22 @@ input, textarea, [contenteditable="true"] {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #22d3ee;
+  background: #f59e0b;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .slider::-webkit-slider-thumb:hover {
   transform: scale(1.25);
-  box-shadow: 0 0 16px rgba(34, 211, 238, 0.75);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.75);
 }
 .slider::-moz-range-thumb {
   width: 14px; height: 14px; border-radius: 50%;
-  background: #22d3ee; cursor: pointer; border: none;
-  box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+  background: #f59e0b; cursor: pointer; border: none;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
 }
 .light .slider::-webkit-slider-thumb {
-  background: #0284c7;
-  box-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+  background: #b45309;
+  box-shadow: 0 0 10px rgba(180, 83, 9, 0.40);
 }
-.light .slider::-moz-range-thumb { background: #0284c7; }
+.light .slider::-moz-range-thumb { background: #b45309; }

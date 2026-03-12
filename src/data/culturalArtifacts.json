@@ -1,249 +1,1176 @@
 {
   "locations": [
     {
+      "id": "loc-tams-burgers-21",
+      "type": "point",
+      "lat": 33.9030672,
+      "lng": -118.2532562,
+      "name": "Tam's Burgers No. 21",
+      "neighborhood": "Rosecrans / Central"
+    },
+    {
+      "id": "loc-compton-courthouse",
+      "type": "point",
+      "lat": 33.8952,
+      "lng": -118.2233,
+      "name": "Compton Courthouse",
+      "neighborhood": "Downtown Compton"
+    },
+    {
+      "id": "loc-compton-civic-center",
+      "type": "point",
+      "lat": 33.8949,
+      "lng": -118.2249,
+      "name": "Compton Civic Center / MLK Memorial",
+      "neighborhood": "Downtown Compton"
+    },
+    {
       "id": "loc-city-hall",
       "type": "point",
-      "lat": 33.8958,
-      "lng": -118.2201,
+      "lat": 33.8937,
+      "lng": -118.225,
       "name": "Compton City Hall",
-      "neighborhood": "Civic Center"
+      "neighborhood": "Downtown Compton"
     },
     {
-      "id": "loc-courthouse",
-      "lat": 33.8962,
-      "lng": -118.2195,
-      "name": "Compton Courthouse",
-      "neighborhood": "Downtown"
+      "id": "loc-compton-fashion-center",
+      "type": "point",
+      "lat": 33.909964,
+      "lng": -118.208253,
+      "name": "Compton Fashion Center / Compton Swap Meet",
+      "neighborhood": "North Compton"
     },
     {
-      "id": "loc-centennial",
-      "lat": 33.898,
-      "lng": -118.219,
-      "name": "Centennial High School",
+      "id": "loc-compton-college",
+      "type": "point",
+      "lat": 33.874416,
+      "lng": -118.208855,
+      "name": "Compton College",
+      "neighborhood": "East Compton"
+    },
+    {
+      "id": "loc-harlan-alondra",
+      "type": "point",
+      "lat": 33.888472,
+      "lng": -118.242309,
+      "name": "Harlan Ave & Alondra Blvd",
+      "neighborhood": "West Compton"
+    },
+    {
+      "id": "loc-piru-central",
+      "type": "point",
+      "lat": 33.9145,
+      "lng": -118.2517,
+      "name": "Piru St & Central Ave",
+      "neighborhood": "Northwest Compton"
+    },
+    {
+      "id": "loc-116-e-alondra",
+      "type": "point",
+      "lat": 33.889,
+      "lng": -118.2198,
+      "name": "116 E Alondra Blvd",
       "neighborhood": "Central Compton"
     },
     {
-      "id": "loc-rosecrans",
+      "id": "loc-compton-woodley-airport",
+      "type": "point",
+      "lat": 33.889,
+      "lng": -118.239,
+      "name": "Compton/Woodley Airport",
+      "neighborhood": "West Compton"
+    },
+    {
+      "id": "loc-centennial-high",
+      "type": "point",
+      "lat": 33.914444,
+      "lng": -118.251667,
+      "name": "Centennial High School",
+      "neighborhood": "Northwest Compton"
+    },
+    {
+      "id": "loc-rosecrans-ave",
       "type": "street",
       "coordinates": [
-        [-118.224, 33.888],
-        [-118.218, 33.895],
-        [-118.215, 33.902],
-        [-118.214, 33.910],
-        [-118.216, 33.918]
+        [
+          -118.2595,
+          33.903
+        ],
+        [
+          -118.201,
+          33.903
+        ]
       ],
       "name": "Rosecrans Ave",
       "neighborhood": "North Compton"
     },
     {
-      "id": "loc-downtown",
-      "lat": 33.8955,
-      "lng": -118.2215,
-      "name": "Downtown Compton",
-      "neighborhood": "Downtown"
+      "id": "loc-central-ave",
+      "type": "street",
+      "coordinates": [
+        [
+          -118.2567,
+          33.916
+        ],
+        [
+          -118.2567,
+          33.882
+        ]
+      ],
+      "name": "Central Ave",
+      "neighborhood": "West Compton"
+    },
+    {
+      "id": "loc-alondra-blvd",
+      "type": "street",
+      "coordinates": [
+        [
+          -118.2495,
+          33.8885
+        ],
+        [
+          -118.204,
+          33.8885
+        ]
+      ],
+      "name": "Alondra Blvd",
+      "neighborhood": "South Compton"
+    },
+    {
+      "id": "loc-long-beach-blvd",
+      "type": "street",
+      "coordinates": [
+        [
+          -118.2084,
+          33.9155
+        ],
+        [
+          -118.2084,
+          33.8875
+        ]
+      ],
+      "name": "Long Beach Blvd",
+      "neighborhood": "North and Central Compton"
+    },
+    {
+      "id": "loc-compton-blvd",
+      "type": "street",
+      "coordinates": [
+        [
+          -118.242,
+          33.8951
+        ],
+        [
+          -118.205,
+          33.8951
+        ]
+      ],
+      "name": "Compton Blvd",
+      "neighborhood": "Downtown Compton"
+    },
+    {
+      "id": "loc-wilmington-ave",
+      "type": "street",
+      "coordinates": [
+        [
+          -118.239,
+          33.916
+        ],
+        [
+          -118.239,
+          33.884
+        ]
+      ],
+      "name": "Wilmington Ave",
+      "neighborhood": "West Compton"
+    },
+    {
+      "id": "loc-willowbrook-ave",
+      "type": "street",
+      "coordinates": [
+        [
+          -118.2273,
+          33.9
+        ],
+        [
+          -118.2273,
+          33.8875
+        ]
+      ],
+      "name": "Willowbrook Ave",
+      "neighborhood": "Downtown Compton"
+    },
+    {
+      "id": "loc-rosecrans-central",
+      "type": "point",
+      "lat": 33.903,
+      "lng": -118.2533,
+      "name": "Rosecrans Ave & Central Ave",
+      "neighborhood": "West Compton"
+    },
+    {
+      "id": "loc-rosecrans-long-beach",
+      "type": "point",
+      "lat": 33.903,
+      "lng": -118.2084,
+      "name": "Rosecrans Ave & Long Beach Blvd",
+      "neighborhood": "North Compton"
+    },
+    {
+      "id": "loc-long-beach-compton",
+      "type": "point",
+      "lat": 33.8951,
+      "lng": -118.2084,
+      "name": "Long Beach Blvd & Compton Blvd",
+      "neighborhood": "Central Compton"
+    },
+    {
+      "id": "loc-compton-wilmington",
+      "type": "point",
+      "lat": 33.8951,
+      "lng": -118.239,
+      "name": "Compton Blvd & Wilmington Ave",
+      "neighborhood": "West Central Compton"
+    },
+    {
+      "id": "loc-alondra-wilmington",
+      "type": "point",
+      "lat": 33.8885,
+      "lng": -118.239,
+      "name": "Alondra Blvd & Wilmington Ave",
+      "neighborhood": "West Compton"
+    },
+    {
+      "id": "loc-rosecrans-willowbrook",
+      "type": "point",
+      "lat": 33.903,
+      "lng": -118.2273,
+      "name": "Rosecrans Ave & Willowbrook Ave",
+      "neighborhood": "North Central Compton"
+    },
+    {
+      "id": "loc-piru-street",
+      "type": "street",
+      "coordinates": [
+        [
+          -118.2555,
+          33.9145
+        ],
+        [
+          -118.247,
+          33.9145
+        ]
+      ],
+      "name": "Piru St",
+      "neighborhood": "Northwest Compton"
     }
   ],
   "artifacts": [
     {
-      "id": "art-rosecrans-compton",
+      "id": "art-lyric-element-tams",
       "type": "lyric-snippet",
-      "locationId": "loc-rosecrans",
-      "title": "Weekend on Rosecrans",
+      "locationId": "loc-tams-burgers-21",
+      "title": "Hangin' out at Tam's",
       "creator": "Kendrick Lamar",
-      "sourceTitle": "Compton (feat. Dr. Dre)",
+      "sourceTitle": "ELEMENT.",
+      "year": 2017,
+      "date": "2017-04-14",
+      "caption": "\"I be hangin' out at Tam's\"",
+      "tags": [
+        "kendrick",
+        "tams",
+        "rosecrans"
+      ],
+      "heatWeight": 1.0,
+      "resource": {
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/1EaKU4dMbesXXd3BrLCtYG"
+      }
+    },
+    {
+      "id": "art-video-not-like-us-tams",
+      "type": "music-video",
+      "locationId": "loc-tams-burgers-21",
+      "title": "Tam's storefront scene",
+      "creator": "Kendrick Lamar",
+      "sourceTitle": "Not Like Us",
+      "year": 2024,
+      "date": "2024-07-04",
+      "caption": "Tam's Burgers exterior and crowd scenes anchor the Rosecrans stop.",
+      "tags": [
+        "kendrick",
+        "tams",
+        "video"
+      ],
+      "heatWeight": 1.2,
+      "resource": {
+        "kind": "youtube",
+        "url": "https://www.youtube.com/watch?v=H58vbez_m4E",
+        "startSeconds": 0
+      }
+    },
+    {
+      "id": "art-film-tams-mural",
+      "type": "film-snippet",
+      "locationId": "loc-tams-burgers-21",
+      "title": "Tam's mural coverage",
+      "creator": "ABC7",
+      "sourceTitle": "'Not Like Us' mural at iconic Compton's Tam's Burgers No. 21 honors Kendrick Lamar",
+      "year": 2024,
+      "date": "2024-07-12",
+      "caption": "Fresh mural outside Tam's marks the video location.",
+      "tags": [
+        "tams",
+        "mural",
+        "news"
+      ],
+      "heatWeight": 0.9,
+      "resource": {
+        "kind": "youtube",
+        "url": "https://www.youtube.com/watch?v=uM42haAnhtI"
+      }
+    },
+    {
+      "id": "art-video-not-like-us-courthouse",
+      "type": "music-video",
+      "locationId": "loc-compton-courthouse",
+      "title": "Courthouse scene",
+      "creator": "Kendrick Lamar",
+      "sourceTitle": "Not Like Us",
+      "year": 2024,
+      "date": "2024-07-04",
+      "caption": "Courthouse steps and plaza appear in the opening run of the video.",
+      "tags": [
+        "kendrick",
+        "courthouse",
+        "video"
+      ],
+      "heatWeight": 1.15,
+      "resource": {
+        "kind": "youtube",
+        "url": "https://www.youtube.com/watch?v=H58vbez_m4E",
+        "startSeconds": 0
+      }
+    },
+    {
+      "id": "art-film-la-times-courthouse-shoot",
+      "type": "film-snippet",
+      "locationId": "loc-compton-courthouse",
+      "title": "Filming day at the courthouse",
+      "creator": "Los Angeles Times",
+      "sourceTitle": "Kendrick Lamar films 'Not Like Us' music video in Compton",
+      "year": 2024,
+      "date": "2024-06-24",
+      "caption": "News photos and report place the shoot at the courthouse on June 22.",
+      "tags": [
+        "courthouse",
+        "filming",
+        "2024"
+      ],
+      "heatWeight": 0.95,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.latimes.com/entertainment-arts/music/story/2024-06-24/kendrick-lamar-not-like-us-music-video-compton"
+      }
+    },
+    {
+      "id": "art-film-hood-life-downtown",
+      "type": "film-snippet",
+      "locationId": "loc-compton-civic-center",
+      "title": "Downtown tour stop",
+      "creator": "Pitchfork",
+      "sourceTitle": "Hood Life: A Hip Hop Guided Tour Of Compton",
       "year": 2012,
-      "caption": "Won't you spend a weekend on Rosecrans...",
-      "tags": ["lyric", "rosecrans", "good kid m.A.A.d city"],
-      "heatWeight": 1,
+      "date": "2012-11-01",
+      "caption": "Tour footage moves through downtown Compton landmarks and rap history.",
+      "tags": [
+        "downtown",
+        "tour",
+        "documentary"
+      ],
+      "heatWeight": 0.9,
+      "resource": {
+        "kind": "youtube",
+        "url": "https://www.youtube.com/watch?v=HTWyXiaFyqc"
+      }
+    },
+    {
+      "id": "art-film-not-like-us-city-hall-permit",
+      "type": "film-snippet",
+      "locationId": "loc-city-hall",
+      "title": "City Hall named among permit locations",
+      "creator": "Yahoo Entertainment",
+      "sourceTitle": "Kendrick Lamar's 'Not Like Us' victory lap: Compton fans react to video shoot",
+      "year": 2024,
+      "date": "2024-06-24",
+      "caption": "Report names Compton City Hall among the June 2024 shoot locations.",
+      "tags": [
+        "city-hall",
+        "permit",
+        "2024"
+      ],
+      "heatWeight": 0.8,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.yahoo.com/entertainment/kendrick-lamars-not-us-victory-230548003.html"
+      }
+    },
+    {
+      "id": "art-video-king-kunta-swapmeet",
+      "type": "music-video",
+      "locationId": "loc-compton-fashion-center",
+      "title": "Swap Meet rooftop scene",
+      "creator": "Kendrick Lamar",
+      "sourceTitle": "King Kunta",
+      "year": 2015,
+      "date": "2015-04-01",
+      "caption": "Swap Meet rooftop and storefront shots dominate the video's Compton section.",
+      "tags": [
+        "kendrick",
+        "swap-meet",
+        "roof"
+      ],
+      "heatWeight": 1.15,
+      "resource": {
+        "kind": "youtube",
+        "url": "https://www.youtube.com/watch?v=hRK7PVJFbS8",
+        "startSeconds": 0
+      }
+    },
+    {
+      "id": "art-film-king-kunta-bts",
+      "type": "film-snippet",
+      "locationId": "loc-compton-fashion-center",
+      "title": "Behind the scenes at the Swap Meet",
+      "creator": "Top Dawg Entertainment",
+      "sourceTitle": "Kendrick Lamar - King Kunta: Behind the Scenes",
+      "year": 2015,
+      "date": "2015-03-27",
+      "caption": "Behind-the-scenes footage shows the Compton Swap Meet shoot in progress.",
+      "tags": [
+        "swap-meet",
+        "bts",
+        "kendrick"
+      ],
+      "heatWeight": 0.95,
+      "resource": {
+        "kind": "youtube",
+        "url": "https://www.youtube.com/watch?v=C5pXhOOzZcs"
+      }
+    },
+    {
+      "id": "art-film-cycadelic-records",
+      "type": "film-snippet",
+      "locationId": "loc-compton-fashion-center",
+      "title": "Cycadelic Records stall archive",
+      "creator": "Wikipedia",
+      "sourceTitle": "Cycadelic Records",
+      "year": 2024,
+      "date": "2024-01-01",
+      "caption": "Archive entry ties the label's stall directly to the Swap Meet building.",
+      "tags": [
+        "cycadelic",
+        "archive",
+        "nwa"
+      ],
+      "heatWeight": 0.85,
+      "resource": {
+        "kind": "web",
+        "url": "https://en.wikipedia.org/wiki/Cycadelic_Records"
+      }
+    },
+    {
+      "id": "art-film-kendrick-compton-college-speech",
+      "type": "film-snippet",
+      "locationId": "loc-compton-college",
+      "title": "Surprise commencement speech",
+      "creator": "Rolling Stone",
+      "sourceTitle": "Kendrick Lamar Gives Surprise Commencement Speech at Compton College",
+      "year": 2024,
+      "date": "2024-06-08",
+      "caption": "Lamar tells graduates he is proud of Compton and Compton College.",
+      "tags": [
+        "college",
+        "kendrick",
+        "speech"
+      ],
+      "heatWeight": 0.95,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.rollingstone.com/music/music-news/kendrick-lamar-surprise-commencement-speech-compton-college-1235036057/"
+      }
+    },
+    {
+      "id": "art-film-not-like-us-permit-college",
+      "type": "film-snippet",
+      "locationId": "loc-compton-college",
+      "title": "Compton College listed on permit route",
+      "creator": "Black Enterprise",
+      "sourceTitle": "Kendrick Lamar Called Out By Businesses For 'Not Like Us' Video Shoot",
+      "year": 2024,
+      "date": "2024-09-17",
+      "caption": "Report says the city permit listed Compton College among the shoot locations.",
+      "tags": [
+        "college",
+        "permit",
+        "not-like-us"
+      ],
+      "heatWeight": 0.8,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.blackenterprise.com/kendrick-lamar-not-like-us-video/"
+      }
+    },
+    {
+      "id": "art-film-centennial-neighborhood-profile",
+      "type": "film-snippet",
+      "locationId": "loc-centennial-high",
+      "title": "Centennial-adjacent childhood block",
+      "creator": "GQ",
+      "sourceTitle": "Kendrick Lamar: Rapper of the Year",
+      "year": 2013,
+      "date": "2013-11-12",
+      "caption": "Profile places Lamar's family home a couple of blocks from Centennial High.",
+      "tags": [
+        "centennial",
+        "profile",
+        "kendrick"
+      ],
+      "heatWeight": 0.8,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.gq.com/story/kendrick-lamar-men-of-the-year-rapper"
+      }
+    },
+    {
+      "id": "art-lyric-harlan-alondra",
+      "type": "lyric-snippet",
+      "locationId": "loc-harlan-alondra",
+      "title": "Harlan & Alondra",
+      "creator": "Buddy",
+      "sourceTitle": "Harlan & Alondra",
+      "year": 2018,
+      "date": "2018-07-20",
+      "caption": "\"Harlan & Alondra\"",
+      "tags": [
+        "buddy",
+        "intersection",
+        "album-title"
+      ],
+      "heatWeight": 0.95,
+      "resource": {
+        "kind": "spotify",
+        "url": "https://open.spotify.com/album/5djciKtjqkY9ZQ1OhKICXN"
+      }
+    },
+    {
+      "id": "art-film-harlan-alondra-origin",
+      "type": "film-snippet",
+      "locationId": "loc-harlan-alondra",
+      "title": "Album title origin",
+      "creator": "Billboard",
+      "sourceTitle": "Buddy Talks Debut Album & Collaborations in Interview",
+      "year": 2018,
+      "date": "2018-07-23",
+      "caption": "Interview notes the album was named for his childhood-home intersection.",
+      "tags": [
+        "buddy",
+        "origin",
+        "intersection"
+      ],
+      "heatWeight": 0.85,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.billboard.com/music/rb-hip-hop/buddy-interview-harlan-alondra-album-khalid-8466518/"
+      }
+    },
+    {
+      "id": "art-film-piru-central-gq",
+      "type": "film-snippet",
+      "locationId": "loc-piru-central",
+      "title": "Piru and Central reference",
+      "creator": "GQ",
+      "sourceTitle": "Kendrick Lamar: Rapper of the Year",
+      "year": 2013,
+      "date": "2013-11-12",
+      "caption": "Profile explicitly names \"Central Avenue and Piru Street.\"",
+      "tags": [
+        "piru",
+        "central",
+        "kendrick"
+      ],
+      "heatWeight": 0.9,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.gq.com/story/kendrick-lamar-men-of-the-year-rapper"
+      }
+    },
+    {
+      "id": "art-film-116-east-alondra",
+      "type": "film-snippet",
+      "locationId": "loc-116-e-alondra",
+      "title": "Childhood apartment building",
+      "creator": "Rolling Stone",
+      "sourceTitle": "Kendrick Lamar, New Kid on the Block",
+      "year": 2013,
+      "date": "2013-02-27",
+      "caption": "Rolling Stone identifies the building at 116 East Alondra Boulevard.",
+      "tags": [
+        "alondra",
+        "kendrick",
+        "childhood"
+      ],
+      "heatWeight": 0.9,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.rollingstone.com/music/music-news/kendrick-lamar-new-kid-on-the-block-187631/"
+      }
+    },
+    {
+      "id": "art-film-compton-woodley-airport",
+      "type": "film-snippet",
+      "locationId": "loc-compton-woodley-airport",
+      "title": "Airport at Alondra and Wilmington",
+      "creator": "Los Angeles Times",
+      "sourceTitle": "This must be Compton",
+      "year": 2024,
+      "date": "2024-08-09",
+      "caption": "Guide places the airport near Alondra Boulevard and Wilmington Avenue.",
+      "tags": [
+        "airport",
+        "alondra",
+        "wilmington"
+      ],
+      "heatWeight": 0.7,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.latimes.com/travel/list/compton-los-angeles-guide-things-to-do"
+      }
+    },
+    {
+      "id": "art-lyric-rosecrans-riding",
+      "type": "lyric-snippet",
+      "locationId": "loc-rosecrans-ave",
+      "title": "Riding down Rosecrans",
+      "creator": "DJ Quik, Problem, The Game, Candace Boyd",
+      "sourceTitle": "Rosecrans",
+      "year": 2016,
+      "date": "2016-04-20",
+      "caption": "\"As we riding down Rosecrans\"",
+      "tags": [
+        "rosecrans",
+        "quik",
+        "problem"
+      ],
+      "heatWeight": 1.05,
+      "resource": {
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/0U3kVV6ZHXj1iU0w7TKhmh"
+      }
+    },
+    {
+      "id": "art-lyric-rosecrans-weekend",
+      "type": "lyric-snippet",
+      "locationId": "loc-rosecrans-ave",
+      "title": "Weekend on Rosecrans",
+      "creator": "Kendrick Lamar, Dr. Dre",
+      "sourceTitle": "Compton",
+      "year": 2012,
+      "date": "2012-10-22",
+      "caption": "\"Spend a weekend on Rosecrans\"",
+      "tags": [
+        "rosecrans",
+        "kendrick",
+        "dre"
+      ],
+      "heatWeight": 1.0,
       "resource": {
         "kind": "spotify",
         "url": "https://open.spotify.com/track/1wf4LnpdAhLaoI2WwYDKAE"
       }
     },
     {
-      "id": "art-centennial-state-of-mind",
+      "id": "art-lyric-rosecrans-peer-pressure",
       "type": "lyric-snippet",
-      "locationId": "loc-centennial",
-      "title": "Centennial High reference",
+      "locationId": "loc-rosecrans-ave",
+      "title": "Rosecrans in peer pressure",
       "creator": "Kendrick Lamar",
-      "sourceTitle": "Compton State of Mind",
-      "year": 2009,
-      "caption": "Centennial High, had me swimming with a pool of sharks.",
-      "tags": ["lyric", "centennial", "mixtape"],
-      "heatWeight": 0.96,
+      "sourceTitle": "The Art of Peer Pressure",
+      "year": 2012,
+      "date": "2012-10-22",
+      "caption": "\"Told by Kendrick Lamar on Rosecrans\"",
+      "tags": [
+        "rosecrans",
+        "kendrick",
+        "gkmc"
+      ],
+      "heatWeight": 0.95,
       "resource": {
         "kind": "spotify",
-        "url": "https://open.spotify.com/track/7Chwj6TpudcbeP50gk2jou"
+        "url": "https://open.spotify.com/track/0d0jsoba88SpOoFxCxA2rZ"
       }
     },
     {
-      "id": "art-cityhall-not-like-us",
-      "type": "music-video",
-      "locationId": "loc-city-hall",
-      "title": "Not Like Us crowd sequence",
-      "creator": "Kendrick Lamar",
-      "sourceTitle": "Not Like Us",
-      "year": 2024,
-      "caption": "Victory-lap visuals filmed around Compton civic landmarks.",
-      "tags": ["video", "city hall", "mustard"],
-      "heatWeight": 1,
+      "id": "art-lyric-trouble-on-central",
+      "type": "lyric-snippet",
+      "locationId": "loc-central-ave",
+      "title": "Trouble on Central",
+      "creator": "Buddy",
+      "sourceTitle": "Trouble On Central",
+      "year": 2018,
+      "date": "2018-07-20",
+      "caption": "\"Trouble on Central\"",
+      "tags": [
+        "central",
+        "buddy",
+        "title"
+      ],
+      "heatWeight": 0.95,
       "resource": {
-        "kind": "youtube",
-        "url": "https://www.youtube.com/watch?v=H58vbez_m4E",
-        "startSeconds": 115
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/3tsFWhe45D6CGFSMA77T3B"
       }
     },
     {
-      "id": "art-cityhall-mlk-monument",
-      "type": "image",
-      "locationId": "loc-city-hall",
-      "title": "Civic Center monument image",
-      "creator": "Eric Polk / Wikimedia Commons",
-      "sourceTitle": "Compton Martin Luther King monument",
-      "year": 2007,
-      "caption": "The civic center monument anchors the same plaza where Compton honors its artists and public history.",
-      "tags": ["image", "city hall", "civic center"],
-      "heatWeight": 0.74,
-      "resource": {
-        "kind": "image",
-        "imageUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Compton_martin_luther_king_monument.jpg",
-        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Compton_martin_luther_king_monument.jpg",
-        "credit": "Eric Polk / Wikimedia Commons"
-      }
-    },
-    {
-      "id": "art-cityhall-key-ceremony",
-      "type": "image",
-      "locationId": "loc-city-hall",
-      "title": "Key to the city ceremony archive",
-      "creator": "Los Angeles Times",
-      "sourceTitle": "Kendrick Lamar receives key to Compton",
+      "id": "art-lyric-roped-off-central",
+      "type": "lyric-snippet",
+      "locationId": "loc-central-ave",
+      "title": "Rosecrans, Central",
+      "creator": "The Game, WESTSIDE BOOGIE",
+      "sourceTitle": "Roped Off",
       "year": 2016,
-      "caption": "Compton City Hall became a stage for honoring Kendrick Lamar's place in the city's story.",
-      "tags": ["image", "ceremony", "kendrick"],
-      "heatWeight": 0.68,
-      "resource": {
-        "kind": "external",
-        "url": "https://www.latimes.com/local/lanow/la-me-ln-kendrick-lamar-compton-key-to-the-city-20160213-story.html",
-        "label": "Article source"
-      }
-    },
-    {
-      "id": "art-courthouse-soc",
-      "type": "film-snippet",
-      "locationId": "loc-courthouse",
-      "title": "Straight Outta Compton courthouse reference",
-      "creator": "Universal Pictures",
-      "sourceTitle": "Straight Outta Compton",
-      "year": 2015,
-      "caption": "Film-related reference connected to the courthouse block during production in Compton.",
-      "tags": ["film", "nwa", "courthouse"],
+      "date": "2016-06-16",
+      "caption": "\"Rosecrans, Central\"",
+      "tags": [
+        "central",
+        "the-game",
+        "boogie"
+      ],
       "heatWeight": 0.9,
       "resource": {
-        "kind": "youtube",
-        "url": "https://www.youtube.com/watch?v=RS1rYL19APQ",
-        "startSeconds": 44
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/3HRm5WytIJ96PAPy7xDReD"
       }
     },
     {
-      "id": "art-courthouse-photo",
-      "type": "image",
-      "locationId": "loc-courthouse",
-      "title": "Compton Superior Court facade",
-      "creator": "Jengod / Wikimedia Commons",
-      "sourceTitle": "Compton Superior Court",
-      "year": 2024,
-      "caption": "The courthouse facade has become part of Compton's visual civic iconography in music and film coverage.",
-      "tags": ["image", "courthouse", "downtown"],
-      "heatWeight": 0.62,
+      "id": "art-lyric-cross-alondra",
+      "type": "lyric-snippet",
+      "locationId": "loc-alondra-blvd",
+      "title": "Cross Alondra Boulevard",
+      "creator": "Att Will",
+      "sourceTitle": "Just Another Day in Compton",
+      "year": 2000,
+      "date": "2000-01-01",
+      "caption": "\"Then I cross Alondra Boulevard\"",
+      "tags": [
+        "alondra",
+        "att-will",
+        "street"
+      ],
+      "heatWeight": 0.95,
       "resource": {
-        "kind": "image",
-        "imageUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Compton_Superior_Court.jpg",
-        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Compton_Superior_Court.jpg",
-        "credit": "Jengod / Wikimedia Commons"
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/3GCFSWC251iFhSAtnmhHxE"
       }
     },
     {
-      "id": "art-courthouse-not-like-us",
-      "type": "music-video",
-      "locationId": "loc-courthouse",
-      "title": "Not Like Us courthouse sequence",
-      "creator": "Kendrick Lamar",
-      "sourceTitle": "Not Like Us",
-      "year": 2024,
-      "caption": "\"They not like us\" echoed through multiple Compton civic landmarks, including the courthouse block.",
-      "tags": ["video", "courthouse", "victory-lap"],
-      "heatWeight": 0.88,
-      "resource": {
-        "kind": "youtube",
-        "url": "https://www.youtube.com/watch?v=H58vbez_m4E",
-        "startSeconds": 145
-      }
-    },
-    {
-      "id": "art-centennial-bompton",
+      "id": "art-film-harlan-alondra-street-context",
       "type": "film-snippet",
-      "locationId": "loc-centennial",
-      "title": "NOISEY Bompton: Centennial segment",
-      "creator": "VICE / NOISEY",
-      "sourceTitle": "Bompton: Growing Up With Kendrick Lamar",
+      "locationId": "loc-alondra-blvd",
+      "title": "Intersection context for Buddy's title",
+      "creator": "KUOW",
+      "sourceTitle": "The Best Rap Albums Of 2018 Were Totally Surreal",
+      "year": 2018,
+      "date": "2018-12-23",
+      "caption": "Review says the album is named for the Compton intersection.",
+      "tags": [
+        "alondra",
+        "buddy",
+        "review"
+      ],
+      "heatWeight": 0.7,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.kuow.org/stories/the-best-rap-albums-of-2018-were-totally-surreal"
+      }
+    },
+    {
+      "id": "art-lyric-long-beach-blvd-keisha",
+      "type": "lyric-snippet",
+      "locationId": "loc-long-beach-blvd",
+      "title": "Long Beach Boulevard line",
+      "creator": "Kendrick Lamar, Ashtro Bot",
+      "sourceTitle": "Keisha's Song (Her Pain)",
+      "year": 2011,
+      "date": "2011-07-02",
+      "caption": "\"Fancy girls on Long Beach Boulevard\"",
+      "tags": [
+        "long-beach-blvd",
+        "kendrick",
+        "section80"
+      ],
+      "heatWeight": 1.0,
+      "resource": {
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/7AaET28qSzlkFBcySHh4ES"
+      }
+    },
+    {
+      "id": "art-lyric-long-beach-blvd-just-dippin",
+      "type": "lyric-snippet",
+      "locationId": "loc-long-beach-blvd",
+      "title": "Dippin' down Long Beach Boulevard",
+      "creator": "Snoop Dogg, Dr. Dre, Jewell",
+      "sourceTitle": "Just Dippin'",
+      "year": 1999,
+      "date": "1999-05-11",
+      "caption": "\"Dippin' down Long Beach Boulevard\"",
+      "tags": [
+        "long-beach-blvd",
+        "snoop",
+        "dre"
+      ],
+      "heatWeight": 0.95,
+      "resource": {
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/1iYWNf225EUIESs4svZudx"
+      }
+    },
+    {
+      "id": "art-lyric-compton-blvd-late-night-hype",
+      "type": "lyric-snippet",
+      "locationId": "loc-compton-blvd",
+      "title": "Roll down Compton Boulevard",
+      "creator": "Compton's Most Wanted",
+      "sourceTitle": "Late Night Hype",
+      "year": 1990,
+      "date": "1990-01-01",
+      "caption": "\"Let's roll down Compton Boulevard\"",
+      "tags": [
+        "compton-blvd",
+        "cmw",
+        "mc-eiht"
+      ],
+      "heatWeight": 1.0,
+      "resource": {
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/79hH8RuVS9af6ixS97wREx"
+      }
+    },
+    {
+      "id": "art-lyric-compton-blvd-just-dippin",
+      "type": "lyric-snippet",
+      "locationId": "loc-compton-blvd",
+      "title": "Dippin' down Compton Boulevard",
+      "creator": "Snoop Dogg, Dr. Dre, Jewell",
+      "sourceTitle": "Just Dippin'",
+      "year": 1999,
+      "date": "1999-05-11",
+      "caption": "\"Dippin' down Compton Boulevard\"",
+      "tags": [
+        "compton-blvd",
+        "snoop",
+        "dre"
+      ],
+      "heatWeight": 0.95,
+      "resource": {
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/1iYWNf225EUIESs4svZudx"
+      }
+    },
+    {
+      "id": "art-lyric-compton-blvd-roped-off",
+      "type": "lyric-snippet",
+      "locationId": "loc-compton-blvd",
+      "title": "Compton boulevard",
+      "creator": "The Game, WESTSIDE BOOGIE",
+      "sourceTitle": "Roped Off",
       "year": 2016,
-      "caption": "Documentary footage revisiting Centennial High as part of Kendrick's story.",
-      "tags": ["documentary", "vice", "centennial"],
+      "date": "2016-06-16",
+      "caption": "\"Compton boulevard\"",
+      "tags": [
+        "compton-blvd",
+        "the-game",
+        "boogie"
+      ],
       "heatWeight": 0.85,
       "resource": {
-        "kind": "youtube",
-        "url": "https://www.youtube.com/watch?v=CA1EmLFi4OA",
-        "startSeconds": 170
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/3HRm5WytIJ96PAPy7xDReD"
       }
     },
     {
-      "id": "art-downtown-king-kunta",
+      "id": "art-lyric-wilmington-roped-off",
+      "type": "lyric-snippet",
+      "locationId": "loc-wilmington-ave",
+      "title": "Wilmington",
+      "creator": "The Game, WESTSIDE BOOGIE",
+      "sourceTitle": "Roped Off",
+      "year": 2016,
+      "date": "2016-06-16",
+      "caption": "\"Wilmington\"",
+      "tags": [
+        "wilmington",
+        "the-game",
+        "boogie"
+      ],
+      "heatWeight": 0.8,
+      "resource": {
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/3HRm5WytIJ96PAPy7xDReD"
+      }
+    },
+    {
+      "id": "art-film-airport-wilmington-context",
+      "type": "film-snippet",
+      "locationId": "loc-wilmington-ave",
+      "title": "Airport corner context",
+      "creator": "Los Angeles Times",
+      "sourceTitle": "This must be Compton",
+      "year": 2024,
+      "date": "2024-08-09",
+      "caption": "Guide places the airport by Wilmington Avenue and Alondra Boulevard.",
+      "tags": [
+        "wilmington",
+        "airport",
+        "guide"
+      ],
+      "heatWeight": 0.65,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.latimes.com/travel/list/compton-los-angeles-guide-things-to-do"
+      }
+    },
+    {
+      "id": "art-film-not-like-us-willowbrook-route",
+      "type": "film-snippet",
+      "locationId": "loc-willowbrook-ave",
+      "title": "Willowbrook Ave listed on permit",
+      "creator": "Black Enterprise",
+      "sourceTitle": "Kendrick Lamar Called Out By Businesses For 'Not Like Us' Video Shoot",
+      "year": 2024,
+      "date": "2024-09-17",
+      "caption": "Report says the permit listed Willowbrook Avenue among the locations.",
+      "tags": [
+        "willowbrook",
+        "permit",
+        "not-like-us"
+      ],
+      "heatWeight": 0.7,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.blackenterprise.com/kendrick-lamar-not-like-us-video/"
+      }
+    },
+    {
+      "id": "art-film-not-like-us-central-route",
+      "type": "film-snippet",
+      "locationId": "loc-central-ave",
+      "title": "Central Avenue listed on permit",
+      "creator": "Black Enterprise",
+      "sourceTitle": "Kendrick Lamar Called Out By Businesses For 'Not Like Us' Video Shoot",
+      "year": 2024,
+      "date": "2024-09-17",
+      "caption": "Report says the permit listed Central Avenue among the locations.",
+      "tags": [
+        "central",
+        "permit",
+        "not-like-us"
+      ],
+      "heatWeight": 0.7,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.blackenterprise.com/kendrick-lamar-not-like-us-video/"
+      }
+    },
+    {
+      "id": "art-film-not-like-us-compton-blvd-route",
+      "type": "film-snippet",
+      "locationId": "loc-compton-blvd",
+      "title": "Compton Boulevard listed on permit",
+      "creator": "Black Enterprise",
+      "sourceTitle": "Kendrick Lamar Called Out By Businesses For 'Not Like Us' Video Shoot",
+      "year": 2024,
+      "date": "2024-09-17",
+      "caption": "Report says the permit listed Compton Boulevard among the locations.",
+      "tags": [
+        "compton-blvd",
+        "permit",
+        "not-like-us"
+      ],
+      "heatWeight": 0.7,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.blackenterprise.com/kendrick-lamar-not-like-us-video/"
+      }
+    },
+    {
+      "id": "art-film-not-like-us-tams-shoot-day",
+      "type": "film-snippet",
+      "locationId": "loc-rosecrans-ave",
+      "title": "Rosecrans shoot-day coverage",
+      "creator": "NBC Los Angeles",
+      "sourceTitle": "Kendrick Lamar films 'Not Like Us' music video in Compton",
+      "year": 2024,
+      "date": "2024-06-22",
+      "caption": "NBC report places the crowd at Tam's on Rosecrans Avenue.",
+      "tags": [
+        "rosecrans",
+        "tams",
+        "shoot-day"
+      ],
+      "heatWeight": 0.75,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.nbclosangeles.com/news/local/kendrick-lamar-films-not-like-us-music-video-in-compton/3442396/"
+      }
+    },
+    {
+      "id": "art-lyric-rosecrans-central",
+      "type": "lyric-snippet",
+      "locationId": "loc-rosecrans-central",
+      "title": "Rosecrans, Central",
+      "creator": "The Game, WESTSIDE BOOGIE",
+      "sourceTitle": "Roped Off",
+      "year": 2016,
+      "date": "2016-06-16",
+      "caption": "\"Rosecrans, Central\"",
+      "tags": [
+        "rosecrans",
+        "central",
+        "the-game"
+      ],
+      "heatWeight": 0.9,
+      "resource": {
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/3HRm5WytIJ96PAPy7xDReD"
+      }
+    },
+    {
+      "id": "art-video-king-kunta-rosecrans-long-beach",
       "type": "music-video",
-      "locationId": "loc-downtown",
-      "title": "King Kunta downtown visual",
+      "locationId": "loc-rosecrans-long-beach",
+      "title": "Swap Meet corner context",
       "creator": "Kendrick Lamar",
       "sourceTitle": "King Kunta",
       "year": 2015,
-      "caption": "Compton street-level performance imagery that turned downtown into a stage.",
-      "tags": ["video", "downtown", "to pimp a butterfly"],
-      "heatWeight": 0.94,
+      "date": "2015-04-01",
+      "caption": "Swap Meet footage roots the video near Rosecrans and Long Beach.",
+      "tags": [
+        "swap-meet",
+        "long-beach",
+        "rosecrans"
+      ],
+      "heatWeight": 0.9,
       "resource": {
-        "kind": "spotify",
-        "url": "https://open.spotify.com/track/0N3W5peJUQtI4eyR6GJT5O"
+        "kind": "youtube",
+        "url": "https://www.youtube.com/watch?v=hRK7PVJFbS8",
+        "startSeconds": 0
       }
     },
     {
-      "id": "art-downtown-soc-track",
+      "id": "art-lyric-long-beach-compton",
       "type": "lyric-snippet",
-      "locationId": "loc-downtown",
-      "title": "Straight Outta Compton anthem",
-      "creator": "N.W.A",
-      "sourceTitle": "Straight Outta Compton",
-      "year": 1988,
-      "caption": "Straight outta Compton, crazy motherf***** named Ice Cube.",
-      "tags": ["lyric", "nwa", "anthem"],
-      "heatWeight": 0.98,
+      "locationId": "loc-long-beach-compton",
+      "title": "Long Beach and Compton boulevards",
+      "creator": "Snoop Dogg, Dr. Dre, Jewell",
+      "sourceTitle": "Just Dippin'",
+      "year": 1999,
+      "date": "1999-05-11",
+      "caption": "\"Dippin' down Compton Boulevard\"",
+      "tags": [
+        "compton-blvd",
+        "long-beach-blvd",
+        "snoop"
+      ],
+      "heatWeight": 0.8,
       "resource": {
         "kind": "spotify",
-        "url": "https://open.spotify.com/track/1kGG0kfHYGrff4sWsXMdtE"
+        "url": "https://open.spotify.com/track/1iYWNf225EUIESs4svZudx"
       }
     },
     {
-      "id": "art-rosecrans-tams",
-      "type": "image",
-      "locationId": "loc-rosecrans",
-      "title": "Tam's Burgers mural moment",
-      "creator": "NBC Los Angeles",
-      "sourceTitle": "Tam's Burgers honors Kendrick Lamar",
-      "year": 2024,
-      "caption": "\"They Not Like Us\" mural outside Tam's No. 21 after the video shoot.",
-      "tags": ["image", "tams", "rosecrans"],
-      "heatWeight": 0.78,
+      "id": "art-lyric-compton-wilmington",
+      "type": "lyric-snippet",
+      "locationId": "loc-compton-wilmington",
+      "title": "Compton boulevard, Wilmington",
+      "creator": "The Game, WESTSIDE BOOGIE",
+      "sourceTitle": "Roped Off",
+      "year": 2016,
+      "date": "2016-06-16",
+      "caption": "\"Compton boulevard, Wilmington\"",
+      "tags": [
+        "compton-blvd",
+        "wilmington",
+        "the-game"
+      ],
+      "heatWeight": 0.85,
       "resource": {
-        "kind": "external",
-        "url": "https://www.nbclosangeles.com/news/local/tams-burgers-honors-kendrick-lamar-with-mural-following-not-like-us-music-video/3457259/",
-        "label": "Article source"
+        "kind": "spotify",
+        "url": "https://open.spotify.com/track/3HRm5WytIJ96PAPy7xDReD"
+      }
+    },
+    {
+      "id": "art-film-alondra-wilmington-airport",
+      "type": "film-snippet",
+      "locationId": "loc-alondra-wilmington",
+      "title": "Airport corner mention",
+      "creator": "Los Angeles Times",
+      "sourceTitle": "This must be Compton",
+      "year": 2024,
+      "date": "2024-08-09",
+      "caption": "Guide places the airport near Alondra and Wilmington.",
+      "tags": [
+        "airport",
+        "alondra",
+        "wilmington"
+      ],
+      "heatWeight": 0.7,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.latimes.com/travel/list/compton-los-angeles-guide-things-to-do"
+      }
+    },
+    {
+      "id": "art-film-rosecrans-willowbrook-route",
+      "type": "film-snippet",
+      "locationId": "loc-rosecrans-willowbrook",
+      "title": "Rosecrans to Willowbrook route",
+      "creator": "Black Enterprise",
+      "sourceTitle": "Kendrick Lamar Called Out By Businesses For 'Not Like Us' Video Shoot",
+      "year": 2024,
+      "date": "2024-09-17",
+      "caption": "Permit reporting links Rosecrans-area filming with Willowbrook Avenue.",
+      "tags": [
+        "rosecrans",
+        "willowbrook",
+        "permit"
+      ],
+      "heatWeight": 0.65,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.blackenterprise.com/kendrick-lamar-not-like-us-video/"
+      }
+    },
+    {
+      "id": "art-film-piru-street-profile",
+      "type": "film-snippet",
+      "locationId": "loc-piru-street",
+      "title": "Piru Street in Kendrick profile",
+      "creator": "GQ",
+      "sourceTitle": "Kendrick Lamar: Rapper of the Year",
+      "year": 2013,
+      "date": "2013-11-12",
+      "caption": "Profile names Piru Street as part of the childhood block map.",
+      "tags": [
+        "piru",
+        "kendrick",
+        "profile"
+      ],
+      "heatWeight": 0.8,
+      "resource": {
+        "kind": "web",
+        "url": "https://www.gq.com/story/kendrick-lamar-men-of-the-year-rapper"
       }
     }
   ]

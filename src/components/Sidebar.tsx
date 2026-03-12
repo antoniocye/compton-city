@@ -17,11 +17,11 @@ interface SidebarProps {
   onUpdateSettings: (settings: HeatmapSettings) => void;
 }
 
-const SCHEMES: Record<HeatmapSettings["colorScheme"], { label: string; cls: string }> = {
-  fire:    { label: "Fire",    cls: "from-violet-950 via-red-700 to-yellow-300" },
-  ocean:   { label: "Ocean",   cls: "from-blue-950 via-cyan-500 to-teal-200" },
-  plasma:  { label: "Plasma",  cls: "from-indigo-950 via-fuchsia-600 to-orange-300" },
-  viridis: { label: "Viridis", cls: "from-violet-950 via-teal-500 to-yellow-300" },
+const SCHEMES: Record<HeatmapSettings["colorScheme"], { label: string; gradient: string }> = {
+  fire:    { label: "Fire",    gradient: "linear-gradient(to right, #640c00, #c82000, #e85000, #f0b000, #fff5a0)" },
+  ocean:   { label: "Ocean",   gradient: "linear-gradient(to right, #001640, #0048b0, #009fcc, #00d8b0, #c0fff0)" },
+  plasma:  { label: "Plasma",  gradient: "linear-gradient(to right, #6e0a0a, #c00040, #e82070, #f07020, #ffe030)" },
+  viridis: { label: "Viridis", gradient: "linear-gradient(to right, #0a3820, #146450, #1ea078, #60c830, #fde725)" },
 };
 
 interface SliderProps {
@@ -33,10 +33,10 @@ function Slider({ label, value, min, max, step, display, isDark, onChange }: Sli
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
-        <span className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+        <span className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-stone-500" : "text-stone-400"}`}>
           {label}
         </span>
-        <span className={`text-xs font-mono font-bold ${isDark ? "text-cyan-400" : "text-sky-600"}`}>
+        <span className={`text-xs font-mono font-bold ${isDark ? "text-amber-400" : "text-amber-700"}`}>
           {display ?? value}
         </span>
       </div>
@@ -59,38 +59,38 @@ export default function Sidebar({
 
   /* ── Theme tokens ───────────────────────────────────────────────────── */
   const panel = isDark
-    ? "bg-[#070c1a]/90 border-white/[0.06]"
-    : "bg-white/96 border-slate-200/70 shadow-2xl shadow-black/10";
+    ? "bg-[#181411]/92 border-white/[0.06]"
+    : "bg-[#fdfaf3]/96 border-stone-300/40 shadow-2xl shadow-black/10";
 
-  const divider = isDark ? "border-white/[0.05]" : "border-slate-100";
+  const divider = isDark ? "border-white/[0.05]" : "border-stone-200/60";
 
   const listRow = isDark
     ? "bg-white/[0.025] hover:bg-white/[0.05] border-white/[0.05]"
-    : "bg-slate-50/80 hover:bg-slate-100/80 border-slate-100";
+    : "bg-stone-50/80 hover:bg-stone-100/80 border-stone-200/60";
 
-  const listLabel = isDark ? "text-slate-300" : "text-slate-800";
-  const listSub = isDark ? "text-slate-600" : "text-slate-400";
+  const listLabel = isDark ? "text-stone-300" : "text-stone-800";
+  const listSub = isDark ? "text-stone-600" : "text-stone-400";
 
   const resetBtn = isDark
-    ? "text-slate-600 border-white/[0.07] hover:text-slate-400 hover:border-white/[0.13]"
-    : "text-slate-400 border-slate-200 hover:text-slate-600 hover:border-slate-300";
+    ? "text-stone-600 border-white/[0.07] hover:text-stone-400 hover:border-white/[0.13]"
+    : "text-stone-400 border-stone-200 hover:text-stone-600 hover:border-stone-300";
 
   return (
     <aside className={`absolute top-0 left-0 h-full z-10 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
       <div className="h-full w-64 pt-[72px] pb-4 pl-3">
         <div className={`h-full w-64 flex flex-col border backdrop-blur-2xl rounded-2xl overflow-hidden ${panel}`}>
           <div className={`px-4 py-3 border-b ${divider}`}>
-            <p className={`text-[11px] uppercase tracking-[0.18em] font-semibold ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+            <p className={`text-[11px] uppercase tracking-[0.18em] font-semibold ${isDark ? "text-stone-500" : "text-stone-400"}`}>
               Settings
             </p>
             <p className={`text-xs mt-1 ${listSub}`}>
-              Filters and heat styling for the JSON-loaded artifact dataset.
+              Filter and style the cultural artifact heatmap.
             </p>
           </div>
 
           <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-6">
             <div className="space-y-2.5">
-              <span className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+              <span className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-stone-500" : "text-stone-400"}`}>
                 Active Artifact Types
               </span>
               <div className="grid grid-cols-1 gap-2">
@@ -104,15 +104,15 @@ export default function Sidebar({
                       className={`rounded-xl border px-3 py-2 text-left transition-all ${
                         active
                           ? isDark
-                            ? "bg-cyan-500/10 border-cyan-500/30"
-                            : "bg-sky-50 border-sky-300/70"
+                            ? "bg-amber-500/10 border-amber-500/28"
+                            : "bg-amber-50/70 border-amber-400/50"
                           : listRow
                       }`}
                     >
                       <span className="block text-[10px] uppercase tracking-[0.16em] font-semibold" style={{ color: meta.accent }}>
                         {meta.shortLabel}
                       </span>
-                      <span className={`block text-xs mt-1 ${listLabel}`}>{meta.label}</span>
+                      <span className={`block text-xs mt-0.5 ${listLabel}`}>{meta.label}</span>
                     </button>
                   );
                 })}
@@ -120,24 +120,26 @@ export default function Sidebar({
             </div>
 
             <div className="space-y-2.5">
-              <span className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+              <span className={`text-[11px] uppercase tracking-widest font-medium ${isDark ? "text-stone-500" : "text-stone-400"}`}>
                 Color Scheme
               </span>
               <div className="grid grid-cols-2 gap-2">
                 {(Object.keys(SCHEMES) as HeatmapSettings["colorScheme"][]).map((scheme) => {
-                  const { label, cls } = SCHEMES[scheme];
+                  const { label, gradient } = SCHEMES[scheme];
                   const active = settings.colorScheme === scheme;
                   return (
                     <button
                       key={scheme}
                       onClick={() => onUpdateSettings({ ...settings, colorScheme: scheme })}
                       className={`relative overflow-hidden rounded-xl h-11 transition-all duration-200 border-2 ${
-                        active ? "border-white/75 scale-[1.03] shadow-lg" : "border-transparent hover:border-white/20"
+                        active
+                          ? "border-white/70 scale-[1.03] shadow-lg"
+                          : "border-transparent hover:border-white/20"
                       }`}
                     >
-                      <div className={`absolute inset-0 bg-gradient-to-r ${cls}`} />
+                      <div className="absolute inset-0" style={{ background: gradient }} />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[11px] font-bold text-white drop-shadow">{label}</span>
+                        <span className="text-[11px] font-bold text-white drop-shadow-md">{label}</span>
                       </div>
                     </button>
                   );

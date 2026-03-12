@@ -22,10 +22,10 @@ import ArtifactPanel from "@/components/ArtifactPanel";
 const HeatmapMap = dynamic(() => import("@/components/HeatmapMap"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-[#06091a]">
+    <div className="w-full h-full flex items-center justify-center bg-[#0e0b09]">
       <div className="relative w-10 h-10">
-        <div className="absolute inset-0 rounded-full border-2 border-cyan-500/15" />
-        <div className="absolute inset-0 rounded-full border-2 border-t-cyan-400 animate-spin" />
+        <div className="absolute inset-0 rounded-full border-2 border-amber-500/15" />
+        <div className="absolute inset-0 rounded-full border-2 border-t-amber-400 animate-spin" />
       </div>
     </div>
   ),
@@ -240,7 +240,7 @@ export default function Home() {
   const inStreetView = streetView !== null;
 
   return (
-    <div className={`relative w-screen h-screen overflow-hidden ${theme === "dark" ? "bg-[#06091a]" : "bg-slate-200"}`}>
+    <div className={`relative w-screen h-screen overflow-hidden ${theme === "dark" ? "bg-[#0e0b09]" : "bg-[#f0e8d4]"}`}>
 
       {/* ── Heatmap (always mounted, fades when street view is active) ── */}
       <div

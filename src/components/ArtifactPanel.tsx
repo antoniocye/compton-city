@@ -52,21 +52,21 @@ export default function ArtifactPanel({
   };
 
   const panelCls = isDark
-    ? "bg-[#070c1a]/90 border-white/[0.08] shadow-2xl shadow-black/50"
-    : "bg-white/95 border-slate-200/80 shadow-2xl shadow-black/15";
-  const muted = isDark ? "text-slate-500" : "text-slate-400";
+    ? "bg-[#181411]/92 border-white/[0.07] shadow-2xl shadow-black/55"
+    : "bg-[#fdfaf3]/96 border-stone-300/40 shadow-2xl shadow-black/12";
+  const muted = isDark ? "text-stone-500" : "text-stone-400";
   const listIdle = isDark
-    ? "bg-white/[0.03] border-white/[0.05] text-slate-400 hover:text-white hover:border-white/[0.12]"
-    : "bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300";
+    ? "bg-white/[0.03] border-white/[0.05] text-stone-400 hover:text-stone-100 hover:border-white/[0.12]"
+    : "bg-stone-50 border-stone-200/60 text-stone-500 hover:text-stone-900 hover:border-stone-300";
   const selectedCls = isDark
-    ? "bg-cyan-500/12 border-cyan-500/30 text-cyan-200"
-    : "bg-sky-50 border-sky-300 text-sky-700";
+    ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
+    : "bg-amber-50 border-amber-400/50 text-amber-800";
   const surface = isDark
     ? "bg-white/[0.03] border-white/[0.06]"
-    : "bg-slate-50/90 border-slate-200";
+    : "bg-stone-50/90 border-stone-200/60";
   const navBtn = isDark
-    ? "border-white/[0.08] text-slate-400 hover:text-white hover:border-cyan-500/40"
-    : "border-slate-200 text-slate-500 hover:text-slate-800 hover:border-sky-400/50";
+    ? "border-white/[0.07] text-stone-400 hover:text-stone-100 hover:border-amber-500/38"
+    : "border-stone-200 text-stone-500 hover:text-stone-800 hover:border-amber-500/50";
 
   return (
     <div
@@ -89,10 +89,10 @@ export default function ArtifactPanel({
           {onClose && (
             <button
               onClick={onClose}
-              className={`w-8 h-8 rounded-xl border transition-colors shrink-0 ${
+              className={`w-8 h-8 rounded-xl border transition-colors shrink-0 flex items-center justify-center ${
                 isDark
-                  ? "border-white/[0.06] text-slate-500 hover:text-white hover:border-white/[0.14]"
-                  : "border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300"
+                  ? "border-white/[0.06] text-stone-500 hover:text-stone-100 hover:border-white/[0.14]"
+                  : "border-stone-200 text-stone-400 hover:text-stone-700 hover:border-stone-300"
               }`}
               title="Close artifact panel"
             >
@@ -266,8 +266,8 @@ function ArtifactBody({
           rel="noopener noreferrer"
           className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold border transition-colors ${
             isDark
-              ? "text-cyan-300 border-cyan-500/25 hover:border-cyan-400/50 hover:bg-cyan-500/10"
-              : "text-sky-700 border-sky-300 hover:border-sky-400 hover:bg-sky-50"
+              ? "text-amber-300 border-amber-500/25 hover:border-amber-400/50 hover:bg-amber-500/10"
+              : "text-amber-700 border-amber-400/50 hover:border-amber-500/70 hover:bg-amber-50"
           }`}
         >
           Open resource

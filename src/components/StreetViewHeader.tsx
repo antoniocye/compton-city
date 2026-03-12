@@ -12,8 +12,8 @@ export default function StreetViewHeader({
   onClose,
 }: Props) {
   const iconBtnCls = theme === "dark"
-    ? "bg-[#070c1a]/80 border-white/[0.07] text-slate-400 hover:text-white hover:border-cyan-500/40 hover:bg-cyan-500/10"
-    : "bg-white/90 border-black/[0.07] text-slate-500 hover:text-slate-800 hover:border-sky-400/50 hover:bg-sky-50";
+    ? "bg-[#181411]/88 border-white/[0.07] text-stone-400 hover:text-stone-100 hover:border-amber-500/40 hover:bg-amber-500/10"
+    : "bg-[#fdfaf3]/92 border-stone-300/40 text-stone-500 hover:text-stone-800 hover:border-amber-600/50 hover:bg-amber-50/80";
 
   return (
     <div className="absolute top-0 left-0 right-0 z-10 px-4 py-3 pointer-events-none">

@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import {
+  COLOR_SCHEMES,
   HeatmapSettings,
   Theme,
-  COLOR_SCHEMES,
   LocationSummary,
 } from "@/lib/types";
 import { COMPTON_BORDER_GEOJSON } from "@/lib/comptonBoundary";
@@ -31,12 +31,20 @@ function buildColorExpr(scheme: HeatmapSettings["colorScheme"]) {
   return expr as maplibregl.ExpressionSpecification;
 }
 
-function buildStreetLineColorExpr(scheme: HeatmapSettings["colorScheme"]) {
-  const stops = COLOR_SCHEMES[scheme];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const expr: any[] = ["interpolate", ["linear"], ["get", "weight"]];
-  for (const [s, c] of stops) expr.push(s, c);
-  return expr as maplibregl.ExpressionSpecification;
+function buildStreetCoreColor(): maplibregl.ExpressionSpecification {
+  return [
+    "interpolate", ["linear"], ["get", "weight"],
+    0, "rgba(200,130,20,0.85)",
+    1, "rgba(255,215,50,1)",
+  ] as maplibregl.ExpressionSpecification;
+}
+
+function buildStreetGlowColor(): maplibregl.ExpressionSpecification {
+  return [
+    "interpolate", ["linear"], ["get", "weight"],
+    0, "rgba(200,100,0,0.5)",
+    1, "rgba(255,185,20,0.7)",
+  ] as maplibregl.ExpressionSpecification;
 }
 
 export default function MiniMap({
@@ -128,13 +136,25 @@ export default function MiniMap({
         "heatmap-opacity":   settings.opacity * 0.9,
       }});
 
-      // Street lines (thin)
+      // Street lines — 2-layer glow on the mini-map
       map.addSource("streets-src", { type: "geojson", data: streetsData });
-      map.addLayer({ id: "streets-layer", type: "line", source: "streets-src", paint: {
-        "line-color":   buildStreetLineColorExpr(settings.colorScheme),
-        "line-width":   2,
-        "line-opacity": settings.opacity * 0.8,
-      }});
+      map.addLayer({ id: "streets-glow", type: "line", source: "streets-src",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color":   buildStreetGlowColor(),
+          "line-width":   8,
+          "line-blur":    6,
+          "line-opacity": settings.opacity * 0.35,
+        },
+      });
+      map.addLayer({ id: "streets-core", type: "line", source: "streets-src",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color":   buildStreetCoreColor(),
+          "line-width":   2.5,
+          "line-opacity": settings.opacity * 0.85,
+        },
+      });
 
       // Focus marker
       const markerEl = document.createElement("div");
@@ -224,8 +244,8 @@ export default function MiniMap({
       map.setPaintProperty("heat-layer", "heatmap-color", buildColorExpr(settings.colorScheme));
       map.setPaintProperty("heat-layer", "heatmap-radius", settings.radius * 0.5);
       map.setPaintProperty("heat-layer", "heatmap-opacity", settings.opacity * 0.9);
-      map.setPaintProperty("streets-layer", "line-color", buildStreetLineColorExpr(settings.colorScheme));
-      map.setPaintProperty("streets-layer", "line-opacity", settings.opacity * 0.8);
+      map.setPaintProperty("streets-glow", "line-opacity", settings.opacity * 0.35);
+      map.setPaintProperty("streets-core", "line-opacity", settings.opacity * 0.85);
     } catch { /* map may have been removed */ }
   }, [settings]);
 

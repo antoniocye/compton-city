@@ -115,6 +115,8 @@ export function getArtifactLink(resource: ArtifactResource): string | null {
       return resource.sourceUrl ?? resource.imageUrl ?? null;
     case "external":
       return resource.url;
+    case "web":
+      return resource.url;
     default:
       return null;
   }
