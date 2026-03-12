@@ -285,11 +285,18 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
             zoomControl:           false,
           });
           panoramaRef.current = pano;
+
+          // status_changed fires both on initial load AND on every navigation
+          // step (when the user clicks an arrow to walk). We must only apply
+          // the initial heading on the very first fire, otherwise it snaps the
+          // camera back every time the user tries to walk anywhere.
+          let initialHeadingApplied = false;
           pano.addListener("status_changed", () => {
             if (cancelled) return;
-            // Google Maps resets POV after the panorama finishes loading its
-            // position. Re-apply our computed heading so it always wins.
-            pano.setPov({ heading: targetHeading, pitch: 0 });
+            if (!initialHeadingApplied) {
+              initialHeadingApplied = true;
+              pano.setPov({ heading: targetHeading, pitch: 0 });
+            }
             buildPins(pano, locations, isDark, showPins, onPinClick);
           });
           setState("ready");
