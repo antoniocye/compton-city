@@ -162,25 +162,25 @@ class StreetViewPin {
           if (scale === 0) { el.style.visibility = "hidden"; return; }
         }
 
-        // ── Ground-sinking fix ────────────────────────────────────
-        // Distant pins project to near/below the horizon (lower ~38% of screen).
-        // Showing them there makes them appear to float in the road surface.
-        // Hide any pin beyond 30 m whose anchor falls in the lower 40% of the frame.
-        if (dist > 30 && px.y > h * 0.60) {
-          el.style.visibility = "hidden";
-          return;
-        }
-
-        // ── Viewport culling (behind camera) ──────────────────────
+        // ── Viewport culling (behind camera / way off-screen) ────
         if (px.x < -300 || px.x > w + 300 || px.y < -300 || px.y > h + 300) {
           el.style.visibility = "hidden";
           return;
         }
 
+        // ── Ground-sinking fix ────────────────────────────────────
+        // Ground-level lat/lngs project toward the horizon (~50 % of screen
+        // height) for any location more than a few metres away. Rendering the
+        // pin anchor there makes it look buried in the road surface.
+        // For pins beyond 20 m we clamp the anchor Y to just above the horizon
+        // so the label floats in the far-distance sky rather than the tarmac.
+        const horizonY  = h * 0.46;   // slightly above the true ~50 % horizon
+        const anchorY   = (dist > 20 && px.y > horizonY) ? horizonY : px.y;
+
         // ── Position + scale + opacity ────────────────────────────
         el.style.visibility = "visible";
         el.style.left      = `${px.x}px`;
-        el.style.top       = `${px.y}px`;
+        el.style.top       = `${anchorY}px`;
         el.style.transform = `scale(${scale})`;
         el.style.opacity   = String(Math.min(1, scale * 1.4));
       }
