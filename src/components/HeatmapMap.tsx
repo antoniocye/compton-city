@@ -157,10 +157,11 @@ function buildTooltipHtml(props: maplibregl.MapGeoJSONFeature["properties"]) {
 }
 
 const MASK_COLOR: Record<Theme, string> = {
-  dark:  "rgba(9, 9, 11, 1)",    // zinc-950
-  light: "rgba(228, 228, 231, 1)", // zinc-200
+  dark:  "rgba(9, 9, 11, 1)",
+  light: "rgba(228, 228, 231, 1)",
 };
-const MASK_OPACITY: Record<Theme, number> = { dark: 0.72, light: 0.58 };
+// Lower opacity so any residual concavity reads as a gentle tint, not a harsh cut
+const MASK_OPACITY: Record<Theme, number> = { dark: 0.52, light: 0.42 };
 const BORDER: Record<Theme, { glow: string; line: string }> = {
   dark:  { glow: "rgba(34,211,238,0.22)",  line: "rgba(34,211,238,0.75)" },
   light: { glow: "rgba(100,100,100,0.18)", line: "rgba(80,80,80,0.55)"   },
