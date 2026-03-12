@@ -30,6 +30,12 @@ interface Props {
   onPinClick?: (lat: number, lng: number, label: string) => void;
 }
 
+// ── Tunable pin lift ───────────────────────────────────────────────
+/** Pixels to lift distant (> 20 m) pins above their ground projection.
+ *  Raise this number if pins still appear in the road; lower it if they
+ *  float too high.  Report back the value that looks best and we'll lock it. */
+const PIN_Y_LIFT = 60;
+
 /* ── Distance → scale ─────────────────────────────────────────────── */
 function haversineM(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6_371_000;
@@ -170,17 +176,17 @@ class StreetViewPin {
           return;
         }
 
-        // ── Ground-level hide (no dynamic pitch math → no wobble) ──
-        // fromLatLngToContainerPixel gives the physically correct 3D position.
-        // We simply hide distant pins that project into the lower ~32% of the
-        // frame (road surface when looking level). The raw projected Y is used
-        // as-is — no clamping, no horizon tracking — so pins don't move as
-        // the user tilts the camera up/down beyond what 3D projection dictates.
-        if (dist > 20 && px.y > h * 0.68) {
+        // ── Lift + ground-level hide ──────────────────────────────
+        // Shift the anchor upward by PIN_Y_LIFT pixels for distant pins so
+        // the label floats above the road surface. The raw projected Y is
+        // still used for the hide check so the threshold stays consistent.
+        const rawY   = px.y;
+        const lifted = dist > 20 ? rawY - PIN_Y_LIFT : rawY;
+        if (dist > 20 && rawY > h * 0.80) {   // still in road even after lift
           el.style.visibility = "hidden";
           return;
         }
-        const anchorY = px.y;
+        const anchorY = lifted;
 
         // ── Position + scale + opacity ────────────────────────────
         el.style.visibility = "visible";
@@ -219,23 +225,29 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
     if (!containerRef.current) return;
     setState("loading");
 
-    window.gm_authFailure = () => setState("auth-error");
+    // Prevent a slow getPanorama callback from a *previous* lat/lng from
+    // overwriting the panorama (and its heading) created for the current one.
+    let cancelled = false;
+
+    window.gm_authFailure = () => { if (!cancelled) setState("auth-error"); };
 
     Promise.all([
       getLoader().importLibrary("maps"),
       getLoader().importLibrary("streetView"),
     ]).then(([, svLib]) => {
+      if (cancelled) return;
       const { StreetViewService, StreetViewStatus, StreetViewPanorama } =
         svLib as typeof google.maps;
 
       const svc = new StreetViewService();
       const tryRadius = (radius: number, fallback?: number) => {
         svc.getPanorama({ location: { lat, lng }, radius }, (data, status) => {
+          if (cancelled) return;
           if (status !== StreetViewStatus.OK || !containerRef.current) {
             if (fallback) { tryRadius(fallback); return; }
             setState("no-coverage"); return;
           }
-          const pano =           new StreetViewPanorama(containerRef.current!, {
+          const pano = new StreetViewPanorama(containerRef.current!, {
             position:              data!.location!.latLng!,
             pov:                   { heading: heading ?? 0, pitch: 0 },
             zoom:                  0,
@@ -250,17 +262,17 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
             zoomControl:           false,
           });
           panoramaRef.current = pano;
-
           pano.addListener("status_changed", () => {
-            buildPins(pano, locations, isDark, showPins, onPinClick);
+            if (!cancelled) buildPins(pano, locations, isDark, showPins, onPinClick);
           });
           setState("ready");
         });
       };
       tryRadius(80, 500);
-    }).catch(() => setState("error"));
+    }).catch(() => { if (!cancelled) setState("error"); });
 
     return () => {
+      cancelled = true;
       pinsRef.current.forEach(p => p.remove());
       pinsRef.current = [];
       panoramaRef.current = null;

@@ -118,10 +118,11 @@ export default function Home() {
     }
   }, [locations]);
 
-  // Pin click → jump to pin's location, face back toward where we just were
+  // Pin click → jump to pin's location facing the same direction we were looking
+  // (bearing FROM old position TOWARD the pin = the direction you were looking)
   const handlePinClick = useCallback((lat: number, lng: number, label: string) => {
     const heading = streetView
-      ? computeHeading(lat, lng, streetView.lat, streetView.lng)
+      ? computeHeading(streetView.lat, streetView.lng, lat, lng)
       : 0;
     setStreetView({ lat, lng, label, heading });
   }, [streetView]);
