@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
 import {
   ARTIFACT_TYPE_META,
@@ -27,8 +27,6 @@ interface Props {
   lng: number;
   theme: Theme;
   summaries: LocationSummary[];
-  showPins: boolean;
-  selectedLocationId?: string | null;
   onPinClick?: (
     locationId: string,
     lat: number,
@@ -79,45 +77,16 @@ function distanceToScale(metres: number): number {
   return s < 0.18 ? 0 : s;
 }
 
-/* ── Inject keyframe animation once ───────────────────────────────── */
-let animInjected = false;
-function ensureAnimation() {
-  if (animInjected || typeof document === "undefined") return;
-  animInjected = true;
-  const s = document.createElement("style");
-  s.textContent = `
-    @keyframes svFloat {
-      0%,100% { transform: translate(-50%,-100%) translateY(0px); }
-      50%      { transform: translate(-50%,-100%) translateY(-7px); }
-    }
-    @keyframes svPulse {
-      0%,100% { box-shadow: 0 0 0 3px var(--pin-ring), 0 4px 16px rgba(0,0,0,.5); }
-      50%      { box-shadow: 0 0 0 7px var(--pin-ring), 0 4px 20px rgba(0,0,0,.6); }
-    }
-  `;
-  document.head.appendChild(s);
-}
-
 /* ── Build the pin DOM element ─────────────────────────────────────── */
 function makePinEl(
   summary: LocationSummary,
-  isDark: boolean,
-  selected: boolean
+  isDark: boolean
 ): HTMLDivElement {
-  ensureAnimation();
   const ring  = isDark ? "rgba(34,211,238,0.35)"  : "rgba(2,132,199,0.3)";
-  const dot   = selected
-    ? "#f8fafc"
-    : isDark
-      ? "#22d3ee"
-      : "#0284c7";
+  const dot   = isDark ? "#22d3ee" : "#0284c7";
   const chipBg= isDark ? "rgba(7,12,26,0.93)"      : "rgba(255,255,255,0.96)";
   const chipTx= isDark ? "#f1f5f9"                 : "#0f172a";
-  const chipBr= selected
-    ? "rgba(248,250,252,0.6)"
-    : isDark
-      ? "rgba(34,211,238,0.35)"
-      : "rgba(2,132,199,0.3)";
+  const chipBr= isDark ? "rgba(34,211,238,0.35)" : "rgba(2,132,199,0.3)";
   const typeRow = summary.dominantTypes
     .slice(0, 2)
     .map((type) => {
@@ -146,7 +115,7 @@ function makePinEl(
     cursor: pointer;
     z-index: 100;
     transform-origin: bottom center;
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    transition: opacity 0.18s ease;
   `;
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;">
@@ -173,8 +142,7 @@ function makePinEl(
       <div style="
         width:13px;height:13px;border-radius:50%;
         background:${dot};border:2.5px solid #fff;
-        --pin-ring:${ring};
-        animation:svPulse 2.8s ease-in-out infinite;
+        box-shadow:0 0 0 3px ${ring}, 0 4px 14px rgba(0,0,0,.35);
       "></div>
     </div>`;
   return el;
@@ -189,7 +157,6 @@ class StreetViewPin {
     pos: google.maps.LatLng,
     summary: LocationSummary,
     isDark: boolean,
-    selected: boolean,
     panorama: google.maps.StreetViewPanorama,
     container: HTMLDivElement,
     onPinClick?: (
@@ -199,7 +166,7 @@ class StreetViewPin {
       label: string
     ) => void
   ) {
-    this.el = makePinEl(summary, isDark, selected);
+    this.el = makePinEl(summary, isDark);
     const el = this.el;
 
     if (onPinClick) {
@@ -286,8 +253,6 @@ export default function StreetViewScene({
   lng,
   theme,
   summaries,
-  showPins,
-  selectedLocationId,
   onPinClick,
 }: Props) {
   const containerRef  = useRef<HTMLDivElement>(null);
@@ -296,14 +261,44 @@ export default function StreetViewScene({
   const [state, setState] = useState<SceneState>("loading");
   const isDark = theme === "dark";
 
+  const buildPins = useCallback((
+    pano: google.maps.StreetViewPanorama,
+    locationSummaries: LocationSummary[],
+    dark: boolean,
+    visible: boolean,
+    clickCb?: (
+      locationId: string,
+      lat: number,
+      lng: number,
+      label: string
+    ) => void
+  ) => {
+    pinsRef.current.forEach((pin) => pin.remove());
+    pinsRef.current = [];
+    if (!containerRef.current) return;
+    const cont = containerRef.current;
+    const gmLatLng = (window as unknown as { google: typeof google }).google.maps.LatLng;
+    locationSummaries.forEach((summary) => {
+      const posObj = new gmLatLng(summary.location.lat, summary.location.lng);
+      const pin = new StreetViewPin(
+        posObj,
+        summary,
+        dark,
+        pano,
+        cont,
+        clickCb
+      );
+      if (!visible) pin.setVisible(false);
+      pinsRef.current.push(pin);
+    });
+  }, []);
+
   /* ── Mount panorama ──────────────────────────────────────────────── */
   useEffect(() => {
     if (!API_KEY) { setState("no-key"); return; }
     if (!containerRef.current) return;
     setState("loading");
 
-    // Prevent a slow getPanorama callback from a *previous* lat/lng from
-    // overwriting the panorama (and its heading) created for the current one.
     let cancelled = false;
 
     window.gm_authFailure = () => { if (!cancelled) setState("auth-error"); };
@@ -325,12 +320,6 @@ export default function StreetViewScene({
             setState("no-coverage"); return;
           }
           const panoPos = data!.location!.latLng!;
-
-          // Compute heading from the ACTUAL panorama node (which Google Maps
-          // snapped to) toward the original target coords. This is the only
-          // reliable way to guarantee the target pin is in front of the user —
-          // computing it in page.tsx from the old position is less accurate
-          // because the panorama node is rarely at the exact pin coordinates.
           const targetHeading = bearingToTarget(panoPos, lat, lng);
 
           const pano = new StreetViewPanorama(containerRef.current!, {
@@ -349,27 +338,14 @@ export default function StreetViewScene({
           });
           panoramaRef.current = pano;
 
-          // status_changed fires both on initial load AND on every navigation
-          // step (when the user clicks an arrow to walk). We must only apply
-          // the initial heading on the very first fire, otherwise it snaps the
-          // camera back every time the user tries to walk anywhere.
           let initialHeadingApplied = false;
           pano.addListener("status_changed", () => {
-            if (cancelled) return;
-            if (!initialHeadingApplied) {
-              initialHeadingApplied = true;
-              pano.setPov({ heading: targetHeading, pitch: 0 });
-            }
-            buildPins(
-              pano,
-              summaries,
-              isDark,
-              showPins,
-              selectedLocationId ?? null,
-              onPinClick
-            );
+            if (cancelled || initialHeadingApplied) return;
+            initialHeadingApplied = true;
+            pano.setPov({ heading: targetHeading, pitch: 0 });
+            buildPins(pano, summaries, isDark, true, onPinClick);
+            setState("ready");
           });
-          setState("ready");
         });
       };
       tryRadius(80, 500);
@@ -377,65 +353,17 @@ export default function StreetViewScene({
 
     return () => {
       cancelled = true;
-      pinsRef.current.forEach(p => p.remove());
+      pinsRef.current.forEach((pin) => pin.remove());
       pinsRef.current = [];
       panoramaRef.current = null;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lat, lng]);
+  }, [lat, lng, summaries, isDark, onPinClick, buildPins]);
 
   useEffect(() => {
     const pano = panoramaRef.current;
     if (!pano || state !== "ready") return;
-    buildPins(
-      pano,
-      summaries,
-      isDark,
-      showPins,
-      selectedLocationId ?? null,
-      onPinClick
-    );
-  }, [summaries, showPins, isDark, selectedLocationId, onPinClick, state]);
-
-  /* ── Sync pin visibility ─────────────────────────────────────────── */
-  useEffect(() => {
-    pinsRef.current.forEach(p => p.setVisible(showPins));
-  }, [showPins]);
-
-  /* ── Build / rebuild pins ────────────────────────────────────────── */
-  function buildPins(
-    pano: google.maps.StreetViewPanorama,
-    locationSummaries: LocationSummary[],
-    dark: boolean,
-    visible: boolean,
-    selectedId: string | null,
-    clickCb?: (
-      locationId: string,
-      lat: number,
-      lng: number,
-      label: string
-    ) => void
-  ) {
-    pinsRef.current.forEach(p => p.remove());
-    pinsRef.current = [];
-    if (!containerRef.current) return;
-    const cont = containerRef.current;
-    const gmLatLng = (window as unknown as { google: typeof google }).google.maps.LatLng;
-    locationSummaries.forEach((summary) => {
-      const posObj = new gmLatLng(summary.location.lat, summary.location.lng);
-      const pin = new StreetViewPin(
-        posObj,
-        summary,
-        dark,
-        selectedId === summary.location.id,
-        pano,
-        cont,
-        clickCb
-      );
-      if (!visible) pin.setVisible(false);
-      pinsRef.current.push(pin);
-    });
-  }
+    buildPins(pano, summaries, isDark, true, onPinClick);
+  }, [summaries, isDark, onPinClick, state, buildPins]);
 
   /* ── Shared tokens ───────────────────────────────────────────────── */
   const bg   = isDark ? "bg-[#060a18]" : "bg-slate-100";

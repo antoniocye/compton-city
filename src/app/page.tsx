@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   ARTIFACT_TYPES,
   ArtifactType,
@@ -136,7 +136,6 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [pending, setPending] = useState<{ lat: number; lng: number } | null>(null);
   const [streetView, setStreetView] = useState<StreetViewLocation | null>(null);
-  const [showPins, setShowPins] = useState(true);
   const [activeTypes, setActiveTypes] = useState<ArtifactType[]>(ARTIFACT_TYPES);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
     SAMPLE_LOCATIONS[0]?.id ?? null
@@ -164,12 +163,17 @@ export default function Home() {
     () => filteredArtifacts.reduce((sum, artifact) => sum + artifact.heatWeight, 0),
     [filteredArtifacts]
   );
+  const streetViewRef = useRef<StreetViewLocation | null>(null);
 
   // Sync dark/light class on <html>
   useEffect(() => {
     document.documentElement.classList.toggle("dark",  theme === "dark");
     document.documentElement.classList.toggle("light", theme === "light");
   }, [theme]);
+
+  useEffect(() => {
+    streetViewRef.current = streetView;
+  }, [streetView]);
 
   useEffect(() => {
     if (!summaries.length) {
@@ -303,8 +307,9 @@ export default function Home() {
   ) => {
     const summary = summaries.find((entry) => entry.location.id === locationId) ?? null;
     if (summary) selectSummary(summary);
-    const heading = streetView
-      ? computeHeading(streetView.lat, streetView.lng, lat, lng)
+    const currentStreetView = streetViewRef.current;
+    const heading = currentStreetView
+      ? computeHeading(currentStreetView.lat, currentStreetView.lng, lat, lng)
       : 0;
     setStreetView({
       locationId,
@@ -314,7 +319,7 @@ export default function Home() {
       heading,
       artifactCount: summary?.artifactCount,
     });
-  }, [selectSummary, streetView, summaries]);
+  }, [selectSummary, summaries]);
 
   const handleSelectArtifact = useCallback((locationId: string, artifactId: string) => {
     setSelectedLocationId(locationId);
@@ -387,7 +392,7 @@ export default function Home() {
           summary={currentSummary}
           selectedArtifactId={selectedArtifactId}
           theme={theme}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 w-[min(520px,calc(100vw-3rem))]"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 w-[min(440px,calc(100vw-3rem))] max-h-[min(52vh,520px)]"
           onSelectArtifact={(artifactId) => setSelectedArtifactId(artifactId)}
           onClose={() => {
             setSelectedLocationId(null);
@@ -405,28 +410,20 @@ export default function Home() {
             lng={streetView.lng}
             theme={theme}
             summaries={summaries}
-            showPins={showPins}
-            selectedLocationId={selectedLocationId}
             onPinClick={handlePinClick}
           />
 
           {/* Top header overlay */}
           <StreetViewHeader
-            location={streetView}
             theme={theme}
-            showPins={showPins}
-            artifactCount={currentSummary?.artifactCount ?? streetView.artifactCount ?? 0}
-            activeTypes={activeTypes}
             onClose={closeStreetView}
-            onToggleTheme={toggleTheme}
-            onTogglePins={() => setShowPins(v => !v)}
           />
 
           <ArtifactPanel
             summary={currentSummary}
             selectedArtifactId={selectedArtifactId}
             theme={theme}
-            className="absolute bottom-6 left-6 z-20 w-[min(460px,calc(100vw-18rem))]"
+            className="absolute bottom-5 left-5 z-20 w-[min(360px,calc(100vw-18rem))] max-h-[min(56vh,520px)]"
             onSelectArtifact={(artifactId) => setSelectedArtifactId(artifactId)}
           />
 

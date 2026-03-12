@@ -55,9 +55,8 @@ export const SAMPLE_ARTIFACTS: CulturalArtifact[] = [
     tags: ["lyric", "rosecrans", "good kid m.A.A.d city"],
     heatWeight: 1,
     resource: {
-      kind: "youtube",
-      url: "https://www.youtube.com/watch?v=JIe8QrYUbiE",
-      startSeconds: 160,
+      kind: "spotify",
+      url: "https://open.spotify.com/track/1wf4LnpdAhLaoI2WwYDKAE",
     },
   },
   {
@@ -69,14 +68,11 @@ export const SAMPLE_ARTIFACTS: CulturalArtifact[] = [
     sourceTitle: "Compton State of Mind",
     year: 2009,
     caption: "Centennial High, had me swimming with a pool of sharks.",
-    description:
-      "A school-specific lyric reference that roots Kendrick's coming-of-age story in a precise Compton landmark.",
     tags: ["lyric", "centennial", "mixtape"],
     heatWeight: 0.96,
     resource: {
-      kind: "external",
-      url: "https://www.lyricsify.com/lyrics/kendrick-lamar/compton-state-of-mind",
-      label: "Lyrics source",
+      kind: "spotify",
+      url: "https://open.spotify.com/track/7Chwj6TpudcbeP50gk2jou",
     },
   },
   {
@@ -88,8 +84,6 @@ export const SAMPLE_ARTIFACTS: CulturalArtifact[] = [
     sourceTitle: "Not Like Us",
     year: 2024,
     caption: "Victory-lap visuals filmed around Compton civic landmarks.",
-    description:
-      "The video shoot brought Kendrick, Mustard, and hundreds of locals around City Hall and nearby civic sites.",
     tags: ["video", "city hall", "mustard"],
     heatWeight: 1,
     resource: {
@@ -107,8 +101,6 @@ export const SAMPLE_ARTIFACTS: CulturalArtifact[] = [
     sourceTitle: "Key to the City Ceremony with Kendrick Lamar",
     year: 2016,
     caption: "Photo archive from Kendrick Lamar receiving the key to Compton.",
-    description:
-      "An image-driven artifact tied to the Civic Center plaza, representing Compton honoring one of its defining artists.",
     tags: ["photo", "city hall", "ceremony"],
     heatWeight: 0.72,
     resource: {
@@ -127,8 +119,6 @@ export const SAMPLE_ARTIFACTS: CulturalArtifact[] = [
     sourceTitle: "Straight Outta Compton",
     year: 2015,
     caption: "Film-related reference connected to the courthouse block during production in Compton.",
-    description:
-      "Anchors the movie layer of the map to a real civic location associated with the film's Compton production footprint.",
     tags: ["film", "nwa", "courthouse"],
     heatWeight: 0.9,
     resource: {
@@ -146,8 +136,6 @@ export const SAMPLE_ARTIFACTS: CulturalArtifact[] = [
     sourceTitle: "Bompton: Growing Up With Kendrick Lamar",
     year: 2016,
     caption: "Documentary footage revisiting Centennial High as part of Kendrick's story.",
-    description:
-      "A documentary artifact that connects school memory, neighborhood context, and hip hop lineage.",
     tags: ["documentary", "vice", "centennial"],
     heatWeight: 0.85,
     resource: {
@@ -165,14 +153,62 @@ export const SAMPLE_ARTIFACTS: CulturalArtifact[] = [
     sourceTitle: "King Kunta",
     year: 2015,
     caption: "Compton street-level performance imagery that turned downtown into a stage.",
-    description:
-      "Adds a second music-video reference to show how multiple visual artifacts can cluster in central Compton.",
     tags: ["video", "downtown", "to pimp a butterfly"],
     heatWeight: 0.94,
     resource: {
       kind: "youtube",
       url: "https://www.youtube.com/watch?v=hRK7PVJFbS8",
       startSeconds: 24,
+    },
+  },
+  {
+    id: "art-downtown-soc-track",
+    type: "lyric-snippet",
+    locationId: "loc-downtown",
+    title: "Straight Outta Compton anthem",
+    creator: "N.W.A",
+    sourceTitle: "Straight Outta Compton",
+    year: 1988,
+    caption: "Straight outta Compton, crazy motherf***** named Ice Cube.",
+    tags: ["lyric", "nwa", "anthem"],
+    heatWeight: 0.98,
+    resource: {
+      kind: "spotify",
+      url: "https://open.spotify.com/track/1kGG0kfHYGrff4sWsXMdtE",
+    },
+  },
+  {
+    id: "art-rosecrans-tams",
+    type: "image",
+    locationId: "loc-rosecrans",
+    title: "Tam's Burgers mural moment",
+    creator: "NBC Los Angeles",
+    sourceTitle: "Tam's Burgers honors Kendrick Lamar",
+    year: 2024,
+    caption: "\"They Not Like Us\" mural outside Tam's No. 21 after the video shoot.",
+    tags: ["image", "tams", "rosecrans"],
+    heatWeight: 0.78,
+    resource: {
+      kind: "external",
+      url: "https://www.nbclosangeles.com/news/local/tams-burgers-honors-kendrick-lamar-with-mural-following-not-like-us-music-video/3457259/",
+      label: "Article source",
+    },
+  },
+  {
+    id: "art-courthouse-not-like-us",
+    type: "music-video",
+    locationId: "loc-courthouse",
+    title: "Not Like Us courthouse sequence",
+    creator: "Kendrick Lamar",
+    sourceTitle: "Not Like Us",
+    year: 2024,
+    caption: "\"They not like us\" echoed through multiple Compton civic landmarks, including the courthouse block.",
+    tags: ["video", "courthouse", "victory-lap"],
+    heatWeight: 0.88,
+    resource: {
+      kind: "youtube",
+      url: "https://www.youtube.com/watch?v=H58vbez_m4E",
+      startSeconds: 145,
     },
   },
 ];

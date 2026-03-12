@@ -26,7 +26,7 @@ export default function Legend({
 }) {
   const isDark = theme === "dark";
   return (
-    <div className={`absolute bottom-8 right-4 z-10 rounded-2xl px-4 py-3 backdrop-blur-2xl border transition-all duration-300 ${
+    <div className={`absolute bottom-24 right-4 z-10 rounded-2xl px-4 py-3 backdrop-blur-2xl border transition-all duration-300 ${
       isDark
         ? "bg-[#070c1a]/80 border-white/[0.06] shadow-xl shadow-black/50"
         : "bg-white/95 border-slate-200/60 shadow-lg shadow-black/10"

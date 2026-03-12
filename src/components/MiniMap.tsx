@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import {
   HeatmapSettings,
@@ -38,7 +38,20 @@ export default function MiniMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<maplibregl.Map | null>(null);
   const markerRef    = useRef<maplibregl.Marker | null>(null);
+  const markerElRef  = useRef<HTMLDivElement | null>(null);
   const isDark = theme === "dark";
+
+  const heatData = useMemo(() => ({
+    type: "FeatureCollection" as const,
+    features: summaries.map((summary) => ({
+      type: "Feature" as const,
+      geometry: {
+        type: "Point" as const,
+        coordinates: [summary.location.lng, summary.location.lat] as [number, number],
+      },
+      properties: { weight: summary.normalizedWeight },
+    })),
+  }), [summaries]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -71,28 +84,18 @@ export default function MiniMap({
       // Compton border
       map.addSource("border-src", { type: "geojson", data: COMPTON_BORDER_GEOJSON });
       map.addLayer({ id: "border-glow", type: "line", source: "border-src", paint: {
-        "line-color": isDark ? "rgba(34,211,238,0.3)" : "rgba(2,132,199,0.2)",
+        "line-color": theme === "dark" ? "rgba(34,211,238,0.3)" : "rgba(2,132,199,0.2)",
         "line-width": 6, "line-blur": 5,
       }});
       map.addLayer({ id: "border-line", type: "line", source: "border-src", paint: {
-        "line-color": isDark ? "rgba(34,211,238,0.8)" : "rgba(2,100,180,0.75)",
+        "line-color": theme === "dark" ? "rgba(34,211,238,0.8)" : "rgba(2,100,180,0.75)",
         "line-width": 1.2, "line-dasharray": [4, 3],
       }});
 
       // Heatmap
       map.addSource("heat-src", {
         type: "geojson",
-        data: {
-          type: "FeatureCollection",
-          features: summaries.map((summary) => ({
-            type: "Feature",
-            geometry: {
-              type: "Point",
-              coordinates: [summary.location.lng, summary.location.lat],
-            },
-            properties: { weight: summary.normalizedWeight },
-          })),
-        },
+        data: heatData,
       });
       map.addLayer({ id: "heat-layer", type: "heatmap", source: "heat-src", paint: {
         "heatmap-weight":    ["interpolate", ["linear"], ["get", "weight"], 0, 0, 1, 1],
@@ -104,11 +107,12 @@ export default function MiniMap({
 
       // Focus marker
       const markerEl = document.createElement("div");
+      markerElRef.current = markerEl;
       markerEl.style.cssText = `
         width:14px;height:14px;border-radius:50%;
-        background:${isDark ? "#22d3ee" : "#0284c7"};
+        background:${theme === "dark" ? "#22d3ee" : "#0284c7"};
         border:2.5px solid white;
-        box-shadow:0 0 0 4px ${isDark ? "rgba(34,211,238,0.35)" : "rgba(2,132,199,0.28)"};
+        box-shadow:0 0 0 4px ${theme === "dark" ? "rgba(34,211,238,0.35)" : "rgba(2,132,199,0.28)"};
         pointer-events:none;
       `;
       markerRef.current = new maplibregl.Marker({ element: markerEl })
@@ -131,7 +135,7 @@ export default function MiniMap({
       try { map.remove(); } catch { /* ignore */ }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [theme]);
 
   // Keep marker + centre in sync with focus location
   useEffect(() => {
@@ -142,6 +146,54 @@ export default function MiniMap({
       markerRef.current?.setLngLat([focusLng, focusLat]);
     } catch { /* map may have been removed */ }
   }, [focusLat, focusLng]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    try {
+      map.setLayoutProperty("layer-dark", "visibility", theme === "dark" ? "visible" : "none");
+      map.setLayoutProperty("layer-light", "visibility", theme === "light" ? "visible" : "none");
+      map.setPaintProperty(
+        "border-glow",
+        "line-color",
+        theme === "dark" ? "rgba(34,211,238,0.3)" : "rgba(2,132,199,0.2)"
+      );
+      map.setPaintProperty(
+        "border-line",
+        "line-color",
+        theme === "dark" ? "rgba(34,211,238,0.8)" : "rgba(2,100,180,0.75)"
+      );
+      markerElRef.current?.style.setProperty(
+        "background",
+        theme === "dark" ? "#22d3ee" : "#0284c7"
+      );
+      markerElRef.current?.style.setProperty(
+        "box-shadow",
+        `0 0 0 4px ${
+          theme === "dark" ? "rgba(34,211,238,0.35)" : "rgba(2,132,199,0.28)"
+        }`
+      );
+    } catch { /* map may have been removed */ }
+  }, [theme]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    try {
+      (map.getSource("heat-src") as maplibregl.GeoJSONSource | undefined)?.setData(heatData);
+    } catch { /* map may have been removed */ }
+  }, [heatData]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    try {
+      map.setPaintProperty("heat-layer", "heatmap-intensity", settings.intensity * 0.8);
+      map.setPaintProperty("heat-layer", "heatmap-color", buildColorExpr(settings.colorScheme));
+      map.setPaintProperty("heat-layer", "heatmap-radius", settings.radius * 0.5);
+      map.setPaintProperty("heat-layer", "heatmap-opacity", settings.opacity * 0.9);
+    } catch { /* map may have been removed */ }
+  }, [settings]);
 
   const borderCls = isDark ? "border-white/15 shadow-black/60" : "border-slate-300/60 shadow-black/20";
 
@@ -171,15 +223,6 @@ export default function MiniMap({
             d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2m8-16h2a2 2 0 012 2v2m0 8v2a2 2 0 01-2 2h-2" />
         </svg>
       </button>
-
-      {/* Label chip — top-left */}
-      <div className="absolute top-2 left-2 pointer-events-none">
-        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md ${
-          isDark ? "bg-black/55 text-cyan-400/80" : "bg-white/75 text-sky-600/80"
-        }`}>
-          Heatmap
-        </span>
-      </div>
 
       {/* Teleport hint — bottom, always visible */}
       <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">

@@ -240,7 +240,7 @@ export default function Sidebar({
 
   return (
     <aside className={`absolute top-0 left-0 h-full z-10 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
-      <div className="h-full w-80 pt-[60px] pb-4 pl-3">
+      <div className="h-full w-72 pt-[60px] pb-4 pl-3">
         <div className={`h-full flex flex-col border backdrop-blur-2xl rounded-2xl overflow-hidden ${panel}`}>
 
           {/* Tabs */}
@@ -354,16 +354,9 @@ export default function Sidebar({
                   </div>
 
                   <div>
-                    <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Caption / lyric</label>
+                    <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Quote / lyric / pull quote</label>
                     <textarea rows={3} placeholder="Won't you spend a weekend on Rosecrans..." value={form.caption}
                       onChange={e => setForm({ ...form, caption: e.target.value })}
-                      className={`input-base w-full resize-none ${inp}`} />
-                  </div>
-
-                  <div>
-                    <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Description</label>
-                    <textarea rows={3} placeholder="Why this artifact matters for the location..." value={form.description}
-                      onChange={e => setForm({ ...form, description: e.target.value })}
                       className={`input-base w-full resize-none ${inp}`} />
                   </div>
 
@@ -399,6 +392,10 @@ export default function Sidebar({
                       onChange={e => setForm({ ...form, resourceUrl: e.target.value })}
                       className={`input-base w-full ${inp}`} required />
                   </div>
+
+                  <p className={`text-[10px] leading-relaxed ${lbl}`}>
+                    Use Spotify for songs when possible. For lyric-centric artifacts, pair the media with a direct quote above.
+                  </p>
 
                   {formError && (
                     <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/25 rounded-xl px-3 py-2">

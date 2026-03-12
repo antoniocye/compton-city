@@ -55,7 +55,7 @@ export default function ArtifactPanel({
 
   return (
     <div
-      className={`border backdrop-blur-2xl rounded-3xl overflow-hidden ${panelCls} ${className}`}
+      className={`border backdrop-blur-2xl rounded-3xl overflow-hidden max-h-full ${panelCls} ${className}`}
     >
       <div className="p-4 pb-3 border-b border-inherit">
         <div className="flex items-start justify-between gap-3">
@@ -105,7 +105,7 @@ export default function ArtifactPanel({
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 overflow-y-auto">
         <div className="flex gap-2 overflow-x-auto pb-1">
           {summary.artifacts.map((entry) => (
             <button
@@ -176,10 +176,6 @@ function ArtifactBody({
         <blockquote className={`rounded-2xl border p-3 text-sm leading-relaxed ${surface}`}>
           {artifact.caption}
         </blockquote>
-      )}
-
-      {artifact.description && (
-        <p className={`text-sm leading-relaxed ${muted}`}>{artifact.description}</p>
       )}
 
       <div className={`rounded-2xl border overflow-hidden ${surface}`}>
