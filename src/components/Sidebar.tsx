@@ -78,7 +78,7 @@ export default function Sidebar({
   return (
     <aside className={`absolute top-0 left-0 h-full z-10 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
       <div className="h-full w-64 pt-[72px] pb-4 pl-3">
-        <div className={`h-full flex flex-col border backdrop-blur-2xl rounded-2xl overflow-hidden ${panel}`}>
+        <div className={`h-full w-64 flex flex-col border backdrop-blur-2xl rounded-2xl overflow-hidden ${panel}`}>
           <div className={`px-4 py-3 border-b ${divider}`}>
             <p className={`text-[11px] uppercase tracking-[0.18em] font-semibold ${isDark ? "text-slate-500" : "text-slate-400"}`}>
               Settings

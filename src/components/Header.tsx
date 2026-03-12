@@ -39,7 +39,7 @@ export default function Header({
 
       {/* ── Left: brand ── */}
       <div className="flex items-center gap-2.5 pointer-events-auto">
-        <div className={`border backdrop-blur-xl rounded-2xl px-4 py-2 transition-all duration-300 ${chip}`}>
+        <div className={`w-64 border backdrop-blur-xl rounded-2xl px-4 py-2 transition-all duration-300 ${chip}`}>
           <div className="flex items-center gap-2">
             <div className="relative w-2 h-2">
               <div className="absolute inset-0 rounded-full bg-cyan-400 opacity-40 animate-ping" />

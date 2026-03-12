@@ -333,6 +333,7 @@ export default function StreetViewScene({
             showRoadLabels:        true,
             linksControl:          true,
             panControl:            true,
+            panControlOptions:     { position: (window as unknown as { google: typeof google }).google.maps.ControlPosition.RIGHT_TOP },
             zoomControl:           false,
           });
           panoramaRef.current = pano;

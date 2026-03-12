@@ -211,39 +211,28 @@ function ArtifactBody({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {resourceLink && (
-          <a
-            href={resourceLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold border transition-colors ${
-              isDark
-                ? "text-cyan-300 border-cyan-500/25 hover:border-cyan-400/50 hover:bg-cyan-500/10"
-                : "text-sky-700 border-sky-300 hover:border-sky-400 hover:bg-sky-50"
-            }`}
-          >
-            Open resource
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-              />
-            </svg>
-          </a>
-        )}
-
-        {artifact.tags?.map((tag) => (
-          <span
-            key={tag}
-            className={`text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full border ${surface}`}
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
+      {resourceLink && (
+        <a
+          href={resourceLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold border transition-colors ${
+            isDark
+              ? "text-cyan-300 border-cyan-500/25 hover:border-cyan-400/50 hover:bg-cyan-500/10"
+              : "text-sky-700 border-sky-300 hover:border-sky-400 hover:bg-sky-50"
+          }`}
+        >
+          Open resource
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            />
+          </svg>
+        </a>
+      )}
     </div>
   );
 }
