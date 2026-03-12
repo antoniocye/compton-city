@@ -9,6 +9,7 @@ import {
   LocationSummary,
 } from "@/lib/types";
 import { COMPTON_BORDER_GEOJSON } from "@/lib/comptonBoundary";
+import { getLocationCenter, isStreetLocation, samplePointsAlongStreet } from "@/lib/artifacts";
 
 interface MiniMapProps {
   summaries: LocationSummary[];
@@ -41,17 +42,29 @@ export default function MiniMap({
   const markerElRef  = useRef<HTMLDivElement | null>(null);
   const isDark = theme === "dark";
 
-  const heatData = useMemo(() => ({
-    type: "FeatureCollection" as const,
-    features: summaries.map((summary) => ({
-      type: "Feature" as const,
-      geometry: {
-        type: "Point" as const,
-        coordinates: [summary.location.lng, summary.location.lat] as [number, number],
-      },
-      properties: { weight: summary.normalizedWeight },
-    })),
-  }), [summaries]);
+  const heatData = useMemo(() => {
+    const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
+    for (const summary of summaries) {
+      const weight = summary.normalizedWeight;
+      if (isStreetLocation(summary.location)) {
+        for (const [lng, lat] of samplePointsAlongStreet(summary.location)) {
+          features.push({
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [lng, lat] },
+            properties: { weight },
+          });
+        }
+      } else {
+        const { lat, lng } = getLocationCenter(summary.location);
+        features.push({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [lng, lat] },
+          properties: { weight },
+        });
+      }
+    }
+    return { type: "FeatureCollection" as const, features };
+  }, [summaries]);
 
   useEffect(() => {
     if (!containerRef.current) return;

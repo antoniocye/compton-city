@@ -5,7 +5,46 @@ import {
   CulturalArtifact,
   LocationNode,
   LocationSummary,
+  StreetLocation,
 } from "./types";
+
+/** Returns true if location is a street (line geometry) */
+export function isStreetLocation(loc: LocationNode): loc is StreetLocation {
+  return loc.type === "street";
+}
+
+/** Returns the center point { lat, lng } for any location (for Street View, etc.) */
+export function getLocationCenter(loc: LocationNode): { lat: number; lng: number } {
+  if (isStreetLocation(loc)) {
+    const coords = loc.coordinates;
+    if (!coords.length) throw new Error(`Street location ${loc.id} has no coordinates`);
+    const mid = Math.floor(coords.length / 2);
+    const [lng, lat] = coords[mid];
+    return { lat, lng };
+  }
+  return { lat: loc.lat, lng: loc.lng };
+}
+
+/** Samples points along a street for heatmap rendering. Returns [lng, lat] pairs. */
+export function samplePointsAlongStreet(
+  loc: StreetLocation,
+  count: number = 24
+): [number, number][] {
+  const coords = loc.coordinates;
+  if (coords.length < 2) return coords.length ? [coords[0]] : [];
+  const result: [number, number][] = [];
+  const step = (coords.length - 1) / Math.max(1, count - 1);
+  for (let i = 0; i < count; i++) {
+    const idx = Math.min(i * step, coords.length - 1);
+    const lo = Math.floor(idx);
+    const hi = Math.min(lo + 1, coords.length - 1);
+    const t = idx - lo;
+    const lng = coords[lo][0] + t * (coords[hi][0] - coords[lo][0]);
+    const lat = coords[lo][1] + t * (coords[hi][1] - coords[lo][1]);
+    result.push([lng, lat]);
+  }
+  return result;
+}
 
 export function buildLocationSummaries(
   locations: LocationNode[],

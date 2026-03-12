@@ -50,7 +50,9 @@ export interface StreetViewLocation {
   heading?: number;
 }
 
-export interface LocationNode {
+/** Point location: a single lat/lng (default) */
+export interface PointLocation {
+  type?: "point";
   id: string;
   lat: number;
   lng: number;
@@ -58,6 +60,19 @@ export interface LocationNode {
   neighborhood?: string;
   aliases?: string[];
 }
+
+/** Street location: a line string; the whole street is heat mapped */
+export interface StreetLocation {
+  type: "street";
+  id: string;
+  /** GeoJSON order: [lng, lat] per vertex */
+  coordinates: [number, number][];
+  name: string;
+  neighborhood?: string;
+  aliases?: string[];
+}
+
+export type LocationNode = PointLocation | StreetLocation;
 
 export type ArtifactResource =
   | {

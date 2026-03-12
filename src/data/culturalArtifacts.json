@@ -2,6 +2,7 @@
   "locations": [
     {
       "id": "loc-city-hall",
+      "type": "point",
       "lat": 33.8958,
       "lng": -118.2201,
       "name": "Compton City Hall",
@@ -23,8 +24,14 @@
     },
     {
       "id": "loc-rosecrans",
-      "lat": 33.906,
-      "lng": -118.215,
+      "type": "street",
+      "coordinates": [
+        [-118.224, 33.888],
+        [-118.218, 33.895],
+        [-118.215, 33.902],
+        [-118.214, 33.910],
+        [-118.216, 33.918]
+      ],
       "name": "Rosecrans Ave",
       "neighborhood": "North Compton"
     },

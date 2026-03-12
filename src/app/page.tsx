@@ -10,7 +10,7 @@ import {
   Theme,
   StreetViewLocation,
 } from "@/lib/types";
-import { buildLocationSummaries, filterArtifactsByTypes } from "@/lib/artifacts";
+import { buildLocationSummaries, filterArtifactsByTypes, getLocationCenter } from "@/lib/artifacts";
 import { SAMPLE_ARTIFACTS, SAMPLE_LOCATIONS } from "@/lib/sampleData";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
@@ -69,14 +69,11 @@ function findNearestSummary(
 ): LocationSummary | null {
   if (!summaries.length) return null;
   let best = summaries[0];
-  let bestD = distanceM(lat, lng, best.location.lat, best.location.lng);
+  const bestCenter = getLocationCenter(best.location);
+  let bestD = distanceM(lat, lng, bestCenter.lat, bestCenter.lng);
   for (let i = 1; i < summaries.length; i++) {
-    const d = distanceM(
-      lat,
-      lng,
-      summaries[i].location.lat,
-      summaries[i].location.lng
-    );
+    const center = getLocationCenter(summaries[i].location);
+    const d = distanceM(lat, lng, center.lat, center.lng);
     if (d < bestD) {
       bestD = d;
       best = summaries[i];
@@ -86,10 +83,11 @@ function findNearestSummary(
 }
 
 function resolveStreetView(summary: LocationSummary, heading?: number): StreetViewLocation {
+  const { lat, lng } = getLocationCenter(summary.location);
   return {
     locationId: summary.location.id,
-    lat: summary.location.lat,
-    lng: summary.location.lng,
+    lat,
+    lng,
     label: summary.location.name,
     artifactCount: summary.artifactCount,
     heading,

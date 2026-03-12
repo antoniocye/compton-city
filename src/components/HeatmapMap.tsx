@@ -10,6 +10,7 @@ import {
   Theme,
   LocationSummary,
 } from "@/lib/types";
+import { getLocationCenter, isStreetLocation, samplePointsAlongStreet } from "@/lib/artifacts";
 import {
   COMPTON_MASK_GEOJSON,
   COMPTON_BORDER_GEOJSON,
@@ -37,27 +38,37 @@ function buildHeatmapColorExpr(
 }
 
 function toGeoJSON(summaries: LocationSummary[]): GeoJSON.FeatureCollection {
-  return {
-    type: "FeatureCollection",
-    features: summaries.map((summary) => ({
-      type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [summary.location.lng, summary.location.lat],
-      },
-      properties: {
-        locationId: summary.location.id,
-        label: summary.location.name,
-        artifactCount: summary.artifactCount,
-        totalWeight: summary.totalWeight,
-        weight: summary.normalizedWeight,
-        dominantColor: ARTIFACT_TYPE_META[summary.dominantTypes[0]].accent,
-        dominantTypes: summary.dominantTypes
-          .map((type) => ARTIFACT_TYPE_META[type].label)
-          .join(" · "),
-      },
-    })),
-  };
+  const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
+  for (const summary of summaries) {
+    const props = {
+      locationId: summary.location.id,
+      label: summary.location.name,
+      artifactCount: summary.artifactCount,
+      totalWeight: summary.totalWeight,
+      weight: summary.normalizedWeight,
+      dominantColor: ARTIFACT_TYPE_META[summary.dominantTypes[0]].accent,
+      dominantTypes: summary.dominantTypes
+        .map((t) => ARTIFACT_TYPE_META[t].label)
+        .join(" · "),
+    };
+    if (isStreetLocation(summary.location)) {
+      for (const [lng, lat] of samplePointsAlongStreet(summary.location)) {
+        features.push({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [lng, lat] },
+          properties: props,
+        });
+      }
+    } else {
+      const { lat, lng } = getLocationCenter(summary.location);
+      features.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [lng, lat] },
+        properties: props,
+      });
+    }
+  }
+  return { type: "FeatureCollection", features };
 }
 
 function buildTooltipHtml(props: maplibregl.MapGeoJSONFeature["properties"]) {

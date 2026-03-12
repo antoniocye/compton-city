@@ -7,6 +7,7 @@ import {
   LocationSummary,
   Theme,
 } from "@/lib/types";
+import { getLocationCenter } from "@/lib/artifacts";
 
 declare global {
   interface Window { gm_authFailure?: () => void }
@@ -278,7 +279,8 @@ export default function StreetViewScene({
     const cont = containerRef.current;
     const gmLatLng = (window as unknown as { google: typeof google }).google.maps.LatLng;
     locationSummaries.forEach((summary) => {
-      const posObj = new gmLatLng(summary.location.lat, summary.location.lng);
+      const { lat, lng } = getLocationCenter(summary.location);
+      const posObj = new gmLatLng(lat, lng);
       const pin = new StreetViewPin(
         posObj,
         summary,

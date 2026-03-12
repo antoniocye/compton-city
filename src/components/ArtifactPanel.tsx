@@ -39,6 +39,18 @@ export default function ArtifactPanel({
 
   if (!artifact) return null;
 
+  const currentIndex = summary.artifacts.findIndex((a) => a.id === artifact.id);
+  const hasMultiple = summary.artifacts.length > 1;
+
+  const goPrev = () => {
+    const prev = currentIndex > 0 ? summary.artifacts[currentIndex - 1] : summary.artifacts[summary.artifacts.length - 1];
+    onSelectArtifact(prev.id);
+  };
+  const goNext = () => {
+    const next = currentIndex < summary.artifacts.length - 1 ? summary.artifacts[currentIndex + 1] : summary.artifacts[0];
+    onSelectArtifact(next.id);
+  };
+
   const panelCls = isDark
     ? "bg-[#070c1a]/90 border-white/[0.08] shadow-2xl shadow-black/50"
     : "bg-white/95 border-slate-200/80 shadow-2xl shadow-black/15";
@@ -52,12 +64,15 @@ export default function ArtifactPanel({
   const surface = isDark
     ? "bg-white/[0.03] border-white/[0.06]"
     : "bg-slate-50/90 border-slate-200";
+  const navBtn = isDark
+    ? "border-white/[0.08] text-slate-400 hover:text-white hover:border-cyan-500/40"
+    : "border-slate-200 text-slate-500 hover:text-slate-800 hover:border-sky-400/50";
 
   return (
     <div
-      className={`border backdrop-blur-2xl rounded-3xl overflow-hidden max-h-full ${panelCls} ${className}`}
+      className={`border backdrop-blur-2xl rounded-3xl overflow-hidden max-h-full flex flex-col ${panelCls} ${className}`}
     >
-      <div className="p-4 pb-3 border-b border-inherit">
+      <div className="p-4 pb-2 border-b border-inherit shrink-0">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-semibold tracking-tight">
@@ -74,7 +89,7 @@ export default function ArtifactPanel({
           {onClose && (
             <button
               onClick={onClose}
-              className={`w-8 h-8 rounded-xl border transition-colors ${
+              className={`w-8 h-8 rounded-xl border transition-colors shrink-0 ${
                 isDark
                   ? "border-white/[0.06] text-slate-500 hover:text-white hover:border-white/[0.14]"
                   : "border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300"
@@ -99,26 +114,59 @@ export default function ArtifactPanel({
         </div>
       </div>
 
-      <div className="p-4 space-y-4 overflow-y-auto">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {summary.artifacts.map((entry) => (
+      {/* Artifact row: prev | chips | next */}
+      <div className="px-3 py-2 border-b border-inherit shrink-0">
+        <div className="flex items-center gap-2">
+          {hasMultiple && (
             <button
-              key={entry.id}
-              onClick={() => onSelectArtifact(entry.id)}
-              className={`min-w-0 rounded-2xl border px-3 py-2 text-left transition-all ${
-                entry.id === artifact.id ? selectedCls : listIdle
-              }`}
+              onClick={goPrev}
+              className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${navBtn}`}
+              title="Previous artifact"
             >
-              <p className="text-[10px] uppercase tracking-[0.16em] font-semibold">
-                {ARTIFACT_TYPE_META[entry.type].label}
-              </p>
-              <p className="text-xs font-semibold truncate max-w-44 mt-1">
-                {entry.title}
-              </p>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
-          ))}
+          )}
+          <div className="flex-1 min-w-0 overflow-x-auto scrollbar-thin flex gap-2 py-1">
+            {summary.artifacts.map((entry) => (
+              <button
+                key={entry.id}
+                onClick={() => onSelectArtifact(entry.id)}
+                className={`shrink-0 rounded-xl border px-2.5 py-1.5 text-left transition-all whitespace-nowrap ${
+                  entry.id === artifact.id ? selectedCls : listIdle
+                }`}
+              >
+                <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: ARTIFACT_TYPE_META[entry.type].accent }}>
+                  {ARTIFACT_TYPE_META[entry.type].shortLabel}
+                </span>
+                <span className="text-[11px] font-medium truncate block max-w-[120px]">
+                  {entry.title}
+                </span>
+              </button>
+            ))}
+          </div>
+          {hasMultiple && (
+            <button
+              onClick={goNext}
+              className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${navBtn}`}
+              title="Next artifact"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
         </div>
+        {hasMultiple && (
+          <p className={`text-[10px] mt-1.5 ${muted}`}>
+            {currentIndex + 1} of {summary.artifacts.length}
+          </p>
+        )}
+      </div>
 
+      {/* Main content: one artifact at a time */}
+      <div className="p-4 overflow-y-auto flex-1 min-h-0">
         <ArtifactBody artifact={artifact} theme={theme} surface={surface} muted={muted} />
       </div>
     </div>
