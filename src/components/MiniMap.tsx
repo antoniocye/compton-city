@@ -199,7 +199,7 @@ export default function MiniMap({
 
   return (
     <div
-      className="absolute bottom-6 right-6 z-20"
+      className="absolute bottom-24 right-6 z-20"
       style={{ width: 236, height: 158 }}
     >
       {/* Map canvas — cursor crosshair signals "click to teleport" */}
