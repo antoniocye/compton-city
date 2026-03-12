@@ -5,11 +5,8 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   ARTIFACT_TYPES,
   ArtifactType,
-  CulturalArtifact,
   HeatmapSettings,
-  LocationNode,
   LocationSummary,
-  NewArtifactInput,
   Theme,
   StreetViewLocation,
 } from "@/lib/types";
@@ -35,9 +32,6 @@ const HeatmapMap = dynamic(() => import("@/components/HeatmapMap"), {
 });
 
 const StreetViewScene = dynamic(() => import("@/components/StreetViewScene"), { ssr: false });
-
-let nextLocationId = SAMPLE_LOCATIONS.length + 1;
-let nextArtifactId = SAMPLE_ARTIFACTS.length + 1;
 
 function distanceM(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6_371_000;
@@ -102,30 +96,7 @@ function resolveStreetView(summary: LocationSummary, heading?: number): StreetVi
   };
 }
 
-function findMatchingLocation(
-  locations: LocationNode[],
-  input: NewArtifactInput
-): LocationNode | null {
-  const normalized = input.locationName.trim().toLowerCase();
-  let nearest: LocationNode | null = null;
-  let nearestDistance = Number.POSITIVE_INFINITY;
-
-  for (const location of locations) {
-    const sameName = location.name.trim().toLowerCase() === normalized;
-    const distance = distanceM(input.lat, input.lng, location.lat, location.lng);
-    if (sameName && distance < 100) return location;
-    if (distance < nearestDistance) {
-      nearest = location;
-      nearestDistance = distance;
-    }
-  }
-
-  return nearestDistance <= 35 ? nearest : null;
-}
-
 export default function Home() {
-  const [locations, setLocations] = useState<LocationNode[]>(SAMPLE_LOCATIONS);
-  const [artifacts, setArtifacts] = useState<CulturalArtifact[]>(SAMPLE_ARTIFACTS);
   const [settings, setSettings] = useState<HeatmapSettings>({
     radius: 30,
     intensity: 1.5,
@@ -133,8 +104,7 @@ export default function Home() {
     colorScheme: "fire",
   });
   const [theme, setTheme] = useState<Theme>("dark");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [pending, setPending] = useState<{ lat: number; lng: number } | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [streetView, setStreetView] = useState<StreetViewLocation | null>(null);
   const [activeTypes, setActiveTypes] = useState<ArtifactType[]>(ARTIFACT_TYPES);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
@@ -145,12 +115,12 @@ export default function Home() {
   );
 
   const filteredArtifacts = useMemo(
-    () => filterArtifactsByTypes(artifacts, activeTypes),
-    [artifacts, activeTypes]
+    () => filterArtifactsByTypes(SAMPLE_ARTIFACTS, activeTypes),
+    [activeTypes]
   );
   const summaries = useMemo(
-    () => buildLocationSummaries(locations, filteredArtifacts),
-    [locations, filteredArtifacts]
+    () => buildLocationSummaries(SAMPLE_LOCATIONS, filteredArtifacts),
+    [filteredArtifacts]
   );
   const currentSummary = useMemo(
     () =>
@@ -207,55 +177,6 @@ export default function Home() {
     setSelectedArtifactId(summary?.artifacts[0]?.id ?? null);
   }, []);
 
-  const handleAddArtifact = useCallback((input: NewArtifactInput) => {
-    const existing = findMatchingLocation(locations, input);
-    const location = existing ?? {
-      id: `loc-u${nextLocationId++}`,
-      lat: input.lat,
-      lng: input.lng,
-      name: input.locationName,
-    };
-    const artifact: CulturalArtifact = {
-      id: `art-u${nextArtifactId++}`,
-      locationId: location.id,
-      type: input.type,
-      title: input.title,
-      creator: input.creator,
-      sourceTitle: input.sourceTitle,
-      year: input.year,
-      caption: input.caption,
-      description: input.description,
-      heatWeight: input.heatWeight,
-      resource: input.resource,
-    };
-
-    if (!existing) {
-      setLocations((current) => [...current, location]);
-    }
-    setArtifacts((current) => [...current, artifact]);
-    setSidebarOpen(true);
-    setSelectedLocationId(location.id);
-    setSelectedArtifactId(artifact.id);
-  }, [locations]);
-
-  const handleRemoveArtifact = useCallback((id: string) => {
-    setArtifacts((currentArtifacts) => {
-      const removedArtifact = currentArtifacts.find((artifact) => artifact.id === id);
-      const remainingArtifacts = currentArtifacts.filter((artifact) => artifact.id !== id);
-
-      if (removedArtifact) {
-        const remainingLocationIds = new Set(
-          remainingArtifacts.map((artifact) => artifact.locationId)
-        );
-        setLocations((currentLocations) =>
-          currentLocations.filter((location) => remainingLocationIds.has(location.id))
-        );
-      }
-
-      return remainingArtifacts;
-    });
-  }, []);
-
   const handleToggleType = useCallback((type: ArtifactType) => {
     setActiveTypes((current) => {
       if (current.includes(type)) {
@@ -267,8 +188,6 @@ export default function Home() {
 
   // General map click → fill form + snap street view to nearest location
   const handleMapClick = useCallback((lat: number, lng: number) => {
-    setPending({ lat, lng });
-    setSidebarOpen(true);
     const nearest = findNearestSummary(lat, lng, summaries);
     if (nearest) {
       selectSummary(nearest);
@@ -282,7 +201,6 @@ export default function Home() {
   const handleLocationClick = useCallback((locationId: string) => {
     const summary = summaries.find((entry) => entry.location.id === locationId);
     if (!summary) return;
-    setSidebarOpen(true);
     selectSummary(summary);
     setStreetView(resolveStreetView(summary));
   }, [selectSummary, summaries]);
@@ -321,19 +239,6 @@ export default function Home() {
     });
   }, [selectSummary, summaries]);
 
-  const handleSelectArtifact = useCallback((locationId: string, artifactId: string) => {
-    setSelectedLocationId(locationId);
-    setSelectedArtifactId(artifactId);
-  }, []);
-
-  const handleClearAll = useCallback(() => {
-    setLocations([]);
-    setArtifacts([]);
-    setSelectedLocationId(null);
-    setSelectedArtifactId(null);
-    setStreetView(null);
-  }, []);
-
   const inStreetView = streetView !== null;
 
   return (
@@ -362,43 +267,18 @@ export default function Home() {
           totalWeight={totalWeight}
           theme={theme}
           onToggleTheme={toggleTheme}
-          onClearAll={handleClearAll}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(v => !v)}
         />
         <Sidebar
-          summaries={summaries}
-          artifacts={filteredArtifacts}
-          selectedLocationId={selectedLocationId}
-          selectedArtifactId={selectedArtifactId}
           settings={settings}
           activeTypes={activeTypes}
           isOpen={sidebarOpen}
           theme={theme}
-          pendingCoords={pending}
-          onAddArtifact={handleAddArtifact}
-          onRemoveArtifact={handleRemoveArtifact}
-          onSelectLocation={(locationId) => {
-            const summary = summaries.find((entry) => entry.location.id === locationId) ?? null;
-            selectSummary(summary);
-          }}
-          onSelectArtifact={handleSelectArtifact}
           onToggleType={handleToggleType}
           onUpdateSettings={setSettings}
-          onClearPending={() => setPending(null)}
         />
         <Legend colorScheme={settings.colorScheme} theme={theme} activeTypes={activeTypes} />
-        <ArtifactPanel
-          summary={currentSummary}
-          selectedArtifactId={selectedArtifactId}
-          theme={theme}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 w-[min(440px,calc(100vw-3rem))] max-h-[min(52vh,520px)]"
-          onSelectArtifact={(artifactId) => setSelectedArtifactId(artifactId)}
-          onClose={() => {
-            setSelectedLocationId(null);
-            setSelectedArtifactId(null);
-          }}
-        />
       </div>
 
       {/* ── Street View mode ── */}

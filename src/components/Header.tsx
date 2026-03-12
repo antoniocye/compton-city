@@ -8,7 +8,6 @@ interface HeaderProps {
   totalWeight: number;
   theme: Theme;
   onToggleTheme: () => void;
-  onClearAll: () => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
 }
@@ -19,7 +18,6 @@ export default function Header({
   totalWeight,
   theme,
   onToggleTheme,
-  onClearAll,
   sidebarOpen,
   onToggleSidebar,
 }: HeaderProps) {
@@ -39,22 +37,8 @@ export default function Header({
   return (
     <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-3 pointer-events-none">
 
-      {/* ── Left: hamburger + brand ── */}
+      {/* ── Left: brand ── */}
       <div className="flex items-center gap-2.5 pointer-events-auto">
-        <button
-          onClick={onToggleSidebar}
-          className={`flex items-center justify-center w-9 h-9 rounded-xl border backdrop-blur-xl transition-all duration-200 ${iconBtn}`}
-          title={sidebarOpen ? "Close panel" : "Open panel"}
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            {sidebarOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
-
         <div className={`border backdrop-blur-xl rounded-2xl px-4 py-2 transition-all duration-300 ${chip}`}>
           <div className="flex items-center gap-2">
             <div className="relative w-2 h-2">
@@ -103,6 +87,22 @@ export default function Header({
 
         {/* Theme toggle */}
         <button
+          onClick={onToggleSidebar}
+          className={`flex items-center justify-center w-9 h-9 rounded-xl border backdrop-blur-xl transition-all duration-200 ${
+            sidebarOpen
+              ? isDark
+                ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-300 shadow-lg shadow-black/40"
+                : "bg-sky-50 border-sky-400/50 text-sky-700 shadow-lg shadow-black/10"
+              : iconBtn
+          }`}
+          title={sidebarOpen ? "Close settings" : "Open settings"}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.983 5.5a1.5 1.5 0 013.034 0l.173 1.21a1.5 1.5 0 001.133 1.24l1.182.295a1.5 1.5 0 01.72 2.495l-.83.896a1.5 1.5 0 000 2.043l.83.896a1.5 1.5 0 01-.72 2.495l-1.182.295a1.5 1.5 0 00-1.133 1.24l-.173 1.21a1.5 1.5 0 01-3.034 0l-.173-1.21a1.5 1.5 0 00-1.133-1.24l-1.182-.295a1.5 1.5 0 01-.72-2.495l.83-.896a1.5 1.5 0 000-2.043l-.83-.896a1.5 1.5 0 01.72-2.495l1.182-.295a1.5 1.5 0 001.133-1.24l.173-1.21z" />
+            <circle cx="13.5" cy="12" r="2.25" strokeWidth={2} />
+          </svg>
+        </button>
+        <button
           onClick={onToggleTheme}
           className={`flex items-center justify-center w-9 h-9 rounded-xl border backdrop-blur-xl transition-all duration-200 ${iconBtn}`}
           title={isDark ? "Switch to light mode" : "Switch to dark mode"}
@@ -119,18 +119,6 @@ export default function Header({
           )}
         </button>
 
-        {/* Clear all */}
-        {artifactCount > 0 && (
-          <button
-            onClick={onClearAll}
-            className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/25 backdrop-blur-xl rounded-xl px-3 py-2 text-red-400 hover:bg-red-500/20 hover:border-red-400/50 transition-all duration-200 text-xs font-semibold shadow-lg shadow-black/30"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Clear
-          </button>
-        )}
       </div>
     </header>
   );

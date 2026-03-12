@@ -88,7 +88,6 @@ function makePinEl(
   const chipTx= isDark ? "#f1f5f9"                 : "#0f172a";
   const chipBr= isDark ? "rgba(34,211,238,0.35)" : "rgba(2,132,199,0.3)";
   const typeRow = summary.dominantTypes
-    .slice(0, 2)
     .map((type) => {
       const meta = ARTIFACT_TYPE_META[type];
       return `<span style="

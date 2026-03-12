@@ -97,16 +97,10 @@ export default function ArtifactPanel({
             </button>
           )}
         </div>
-
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          {summary.dominantTypes.map((type) => (
-            <TypeChip key={type} type={type} />
-          ))}
-        </div>
       </div>
 
       <div className="p-4 space-y-4 overflow-y-auto">
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {summary.artifacts.map((entry) => (
             <button
               key={entry.id}
