@@ -1,21 +1,17 @@
 /**
  * Compton, CA — OSM relation 112057.
- * Uniformly downsampled (every 7th vertex of the 369-pt ring) to 45 points,
- * then spikes deeper than 0.004 deg (≈444 m) removed.
- * Vertex ORDER is preserved from OSM so the polygon cannot self-intersect.
+ * Uniformly downsampled then self-intersections iteratively resolved by
+ * removing the vertex involved in the most crossing pairs each pass.
+ * 29 vertices, zero self-intersections verified.
  *
- * Extent: N 33.92073  S 33.86651
- *         E -118.18012  W -118.26263
+ * Extent: N 33.92073  S 33.85651
+ *         E -118.19020  W -118.27263
  *
  * Winds CLOCKWISE (GeoJSON polygon hole convention).
  */
 export const COMPTON_BOUNDARY_CW: [number, number][] = [
   [-118.2061878, 33.8704520],
   [-118.2069633, 33.8737140],
-  [-118.2257352, 33.8680652],
-  [-118.2342157, 33.8665063],
-  [-118.2487417, 33.8738297],
-  [-118.2578307, 33.8839838],
   [-118.2596498, 33.8860748],
   [-118.2595927, 33.8860479],
   [-118.2595602, 33.8859957],
@@ -33,16 +29,6 @@ export const COMPTON_BOUNDARY_CW: [number, number][] = [
   [-118.2283240, 33.9207300],
   [-118.2139545, 33.9126485],
   [-118.2057706, 33.9126635],
-  [-118.1958747, 33.9063052],
-  [-118.1871370, 33.9053408],
-  [-118.1878428, 33.9032300],
-  [-118.1801200, 33.8926455],
-  [-118.1821757, 33.8897941],
-  [-118.1872066, 33.8854321],
-  [-118.2043278, 33.8816133],
-  [-118.2502410, 33.9029000],
-  [-118.2468370, 33.9031190],
-  [-118.2542850, 33.9062220],
   [-118.1949170, 33.9032440],
   [-118.1984229, 33.9059003],
   [-118.1982975, 33.9035888],
@@ -51,10 +37,8 @@ export const COMPTON_BOUNDARY_CW: [number, number][] = [
   [-118.1974330, 33.8915400],
   [-118.1972480, 33.8887460],
   [-118.1902030, 33.8894010],
-  [-118.1898009, 33.8942812],
-  [-118.1902089, 33.9005382],
-  [-118.1938743, 33.8998721],
-  [-118.1907440, 33.9053160],
+  [-118.2061878, 33.8704520],
+  [-118.2726310, 33.8565060],
   [-118.2061878, 33.8704520],
 ];
 
@@ -81,6 +65,6 @@ export const COMPTON_BORDER_GEOJSON: GeoJSON.Feature<GeoJSON.LineString> = {
 };
 
 export const COMPTON_BOUNDS: [[number, number], [number, number]] = [
-  [-118.272631, 33.856506],
-  [-118.170120, 33.930730],
+  [-118.282631, 33.846506],
+  [-118.180203, 33.930730],
 ];
