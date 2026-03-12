@@ -1,16 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Location, HeatmapSettings, Theme } from "@/lib/types";
+import {
+  Artifact,
+  ArtifactProvider,
+  ArtifactType,
+  ARTIFACT_TYPE_LABEL,
+  HeatmapSettings,
+  NewArtifact,
+  Theme,
+} from "@/lib/types";
 
 interface SidebarProps {
-  locations: Location[];
+  artifacts: Artifact[];
   settings: HeatmapSettings;
   isOpen: boolean;
   theme: Theme;
   pendingCoords: { lat: number; lng: number } | null;
-  onAddLocation: (location: Omit<Location, "id">) => void;
-  onRemoveLocation: (id: string) => void;
+  onAddArtifact: (artifact: NewArtifact) => void;
+  onRemoveArtifact: (id: string) => void;
   onUpdateSettings: (settings: HeatmapSettings) => void;
   onClearPending: () => void;
 }
@@ -48,45 +56,95 @@ function Slider({ label, value, min, max, step, display, isDark, onChange }: Sli
 }
 
 export default function Sidebar({
-  locations, settings, isOpen, theme, pendingCoords,
-  onAddLocation, onRemoveLocation, onUpdateSettings, onClearPending,
+  artifacts, settings, isOpen, theme, pendingCoords,
+  onAddArtifact, onRemoveArtifact, onUpdateSettings, onClearPending,
 }: SidebarProps) {
   const [tab, setTab] = useState<Tab>("add");
-  const [form, setForm] = useState({ lat: "", lng: "", label: "", weight: "1" });
-  const [bulkText, setBulkText] = useState("");
-  const [bulkError, setBulkError] = useState("");
-  const [mode, setMode] = useState<"single" | "bulk">("single");
+  const [formError, setFormError] = useState("");
+  const [form, setForm] = useState({
+    type: "song_snippet" as ArtifactType,
+    title: "",
+    creator: "",
+    year: "",
+    lat: "",
+    lng: "",
+    locationName: "",
+    provider: "youtube" as ArtifactProvider,
+    url: "",
+    startSec: "",
+    endSec: "",
+    overlayText: "",
+    tags: "",
+    weight: "1",
+  });
   const isDark = theme === "dark";
 
   useEffect(() => {
     if (!pendingCoords) return;
-    setTab("add"); setMode("single");
+    setTab("add");
     setForm(f => ({ ...f, lat: String(pendingCoords.lat), lng: String(pendingCoords.lng) }));
     onClearPending();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingCoords]);
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAddArtifact = (e: React.FormEvent) => {
     e.preventDefault();
-    const lat = parseFloat(form.lat), lng = parseFloat(form.lng);
-    if (isNaN(lat) || isNaN(lng)) return;
-    onAddLocation({ lat, lng, label: form.label || `Location ${locations.length + 1}`, weight: parseFloat(form.weight) || 1 });
-    setForm({ lat: "", lng: "", label: "", weight: "1" });
-  };
-
-  const handleBulk = () => {
-    setBulkError("");
-    const lines = bulkText.trim().split("\n").filter(l => l.trim());
-    const out: Omit<Location, "id">[] = [];
-    for (let i = 0; i < lines.length; i++) {
-      const parts = lines[i].trim().split(/[,\t ]+/);
-      const lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
-      if (isNaN(lat) || isNaN(lng)) { setBulkError(`Line ${i + 1}: bad coordinates`); return; }
-      const weight = parts[2] ? parseFloat(parts[2]) : 1;
-      out.push({ lat, lng, weight: isNaN(weight) ? 1 : weight, label: parts.slice(3).join(" ") || `Point ${i + 1}` });
+    setFormError("");
+    const lat = parseFloat(form.lat);
+    const lng = parseFloat(form.lng);
+    if (isNaN(lat) || isNaN(lng)) {
+      setFormError("Latitude and longitude are required.");
+      return;
     }
-    out.forEach(p => onAddLocation(p));
-    setBulkText("");
+    if (!form.url.trim()) {
+      setFormError("A media/resource URL is required.");
+      return;
+    }
+    const yearNum = parseInt(form.year, 10);
+    const weight = parseFloat(form.weight);
+    const startSec = parseInt(form.startSec, 10);
+    const endSec = parseInt(form.endSec, 10);
+
+    onAddArtifact({
+      type: form.type,
+      title: form.title.trim() || `Artifact ${artifacts.length + 1}`,
+      creator: form.creator.trim() || undefined,
+      year: Number.isNaN(yearNum) ? undefined : yearNum,
+      location: {
+        name: form.locationName.trim() || "Compton",
+        lat,
+        lng,
+      },
+      resource: {
+        provider: form.provider,
+        url: form.url.trim(),
+        startSec: Number.isNaN(startSec) ? undefined : startSec,
+        endSec: Number.isNaN(endSec) ? undefined : endSec,
+      },
+      overlayText: form.overlayText.trim() || undefined,
+      tags: form.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      weight: Number.isNaN(weight) ? 1 : weight,
+    });
+
+    setForm({
+      type: "song_snippet",
+      title: "",
+      creator: "",
+      year: "",
+      lat: "",
+      lng: "",
+      locationName: "",
+      provider: "youtube",
+      url: "",
+      startSec: "",
+      endSec: "",
+      overlayText: "",
+      tags: "",
+      weight: "1",
+    });
   };
 
   /* ── Theme tokens ───────────────────────────────────────────────────── */
@@ -114,12 +172,6 @@ export default function Sidebar({
     ? "bg-cyan-400/[0.06] border-cyan-500/20 text-cyan-300/75"
     : "bg-sky-50 border-sky-200/80 text-sky-700";
 
-  const modeSeg = isDark ? "bg-white/[0.04]" : "bg-slate-100";
-  const modeOn = isDark
-    ? "bg-cyan-500/15 text-cyan-300 border border-cyan-500/30"
-    : "bg-white text-sky-600 border border-sky-300/70 shadow-sm";
-  const modeOff = isDark ? "text-slate-600 hover:text-slate-300" : "text-slate-400 hover:text-slate-600";
-
   const addBtn = isDark
     ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400/55"
     : "bg-sky-500/8 border-sky-400/40 text-sky-700 hover:bg-sky-100 hover:border-sky-400/70";
@@ -136,7 +188,8 @@ export default function Sidebar({
     ? "text-slate-600 border-white/[0.07] hover:text-slate-400 hover:border-white/[0.13]"
     : "text-slate-400 border-slate-200 hover:text-slate-600 hover:border-slate-300";
 
-  const bulkCount = bulkText.trim().split("\n").filter(l => l.trim()).length;
+  const selectCls = `${inp} input-base`;
+  const artifactTypes = Object.keys(ARTIFACT_TYPE_LABEL) as ArtifactType[];
 
   return (
     <aside className={`absolute top-0 left-0 h-full z-10 transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
@@ -148,7 +201,7 @@ export default function Sidebar({
             {(["add", "list", "settings"] as Tab[]).map(t => (
               <button key={t} onClick={() => setTab(t)}
                 className={`flex-1 py-3 text-[11px] font-semibold uppercase tracking-widest transition-all duration-150 ${tab === t ? tabActive : tabIdle}`}>
-                {t === "add" ? "Add" : t === "list" ? `Points (${locations.length})` : "Style"}
+                {t === "add" ? "Add" : t === "list" ? `Artifacts (${artifacts.length})` : "Style"}
               </button>
             ))}
           </div>
@@ -158,117 +211,229 @@ export default function Sidebar({
             {/* ─── ADD ─── */}
             {tab === "add" && (
               <div className="p-4 space-y-4">
-                {/* Mode toggle */}
-                <div className={`flex rounded-xl p-1 ${modeSeg}`}>
-                  {(["single", "bulk"] as const).map(m => (
-                    <button key={m} onClick={() => setMode(m)}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${mode === m ? modeOn : modeOff}`}>
-                      {m === "single" ? "Single" : "Bulk"}
-                    </button>
-                  ))}
-                </div>
-
                 {/* Map click hint */}
                 <div className={`flex items-start gap-2 rounded-xl border p-3 ${hint}`}>
                   <svg className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
                   </svg>
-                  <span className="text-xs leading-relaxed">Click the map to fill coordinates</span>
+                  <span className="text-xs leading-relaxed">Click the map to pre-fill artifact coordinates.</span>
                 </div>
 
-                {mode === "single" ? (
-                  <form onSubmit={handleAdd} className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Lat</label>
-                        <input type="number" step="any" placeholder="33.8958" value={form.lat}
-                          onChange={e => setForm({ ...form, lat: e.target.value })}
-                          className={`input-base w-full ${inp}`} required />
-                      </div>
-                      <div>
-                        <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Lng</label>
-                        <input type="number" step="any" placeholder="-118.2201" value={form.lng}
-                          onChange={e => setForm({ ...form, lng: e.target.value })}
-                          className={`input-base w-full ${inp}`} required />
-                      </div>
+                <form onSubmit={handleAddArtifact} className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="col-span-2">
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Artifact type</label>
+                      <select
+                        value={form.type}
+                        onChange={(e) => setForm({ ...form, type: e.target.value as ArtifactType })}
+                        className={selectCls}
+                      >
+                        {artifactTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {ARTIFACT_TYPE_LABEL[type]}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Title</label>
+                      <input
+                        type="text"
+                        placeholder="Straight Outta Compton"
+                        value={form.title}
+                        onChange={(e) => setForm({ ...form, title: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                      />
                     </div>
                     <div>
-                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Label</label>
-                      <input type="text" placeholder="Location name" value={form.label}
-                        onChange={e => setForm({ ...form, label: e.target.value })}
-                        className={`input-base w-full ${inp}`} />
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Creator</label>
+                      <input
+                        type="text"
+                        placeholder="N.W.A"
+                        value={form.creator}
+                        onChange={(e) => setForm({ ...form, creator: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Year</label>
+                      <input
+                        type="number"
+                        placeholder="1988"
+                        value={form.year}
+                        onChange={(e) => setForm({ ...form, year: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Lat</label>
+                      <input
+                        type="number"
+                        step="any"
+                        placeholder="33.8958"
+                        value={form.lat}
+                        onChange={(e) => setForm({ ...form, lat: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Lng</label>
+                      <input
+                        type="number"
+                        step="any"
+                        placeholder="-118.2201"
+                        value={form.lng}
+                        onChange={(e) => setForm({ ...form, lng: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                        required
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Location name</label>
+                      <input
+                        type="text"
+                        placeholder="Compton Civic Center"
+                        value={form.locationName}
+                        onChange={(e) => setForm({ ...form, locationName: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Provider</label>
+                      <select
+                        value={form.provider}
+                        onChange={(e) => setForm({ ...form, provider: e.target.value as ArtifactProvider })}
+                        className={selectCls}
+                      >
+                        <option value="youtube">YouTube</option>
+                        <option value="spotify">Spotify</option>
+                        <option value="image_url">Image URL</option>
+                        <option value="other">Other</option>
+                      </select>
                     </div>
                     <div>
                       <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>
-                        Weight <span className="normal-case opacity-50">(0–1)</span>
+                        Weight <span className="normal-case opacity-50">(0-1)</span>
                       </label>
-                      <input type="number" step="0.1" min="0" max="1" value={form.weight}
-                        onChange={e => setForm({ ...form, weight: e.target.value })}
-                        className={`input-base w-full ${inp}`} />
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="1"
+                        value={form.weight}
+                        onChange={(e) => setForm({ ...form, weight: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                      />
                     </div>
-                    <button type="submit"
-                      className={`flex items-center justify-center gap-2 border font-semibold rounded-xl px-4 py-2.5 text-sm w-full active:scale-[0.98] transition-all duration-150 ${addBtn}`}>
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add Point
-                    </button>
-                  </form>
-                ) : (
-                  <div className="space-y-3">
-                    <p className={`text-[10px] leading-relaxed ${lbl}`}>
-                      One location per line:<br />
-                      <code className={`text-xs ${isDark ? "text-cyan-400/70" : "text-sky-600"}`}>lat, lng[, weight[, label]]</code>
-                    </p>
-                    <textarea rows={8} placeholder={"33.8958, -118.2201, 0.9, City Hall\n33.9040, -118.2290, 0.7\n33.8897, -118.2358"}
-                      value={bulkText} onChange={e => setBulkText(e.target.value)}
-                      className={`input-base w-full resize-none font-mono text-xs ${inp}`} />
-                    {bulkError && (
-                      <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/25 rounded-xl px-3 py-2">{bulkError}</p>
-                    )}
-                    <button onClick={handleBulk} disabled={!bulkText.trim()}
-                      className={`flex items-center justify-center gap-2 border font-semibold rounded-xl px-4 py-2.5 text-sm w-full active:scale-[0.98] transition-all duration-150 disabled:opacity-35 disabled:cursor-not-allowed ${addBtn}`}>
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                      </svg>
-                      Import {bulkCount} Point{bulkCount !== 1 ? "s" : ""}
-                    </button>
+                    <div className="col-span-2">
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Resource URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://..."
+                        value={form.url}
+                        onChange={(e) => setForm({ ...form, url: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Start sec</label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="42"
+                        value={form.startSec}
+                        onChange={(e) => setForm({ ...form, startSec: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>End sec</label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="60"
+                        value={form.endSec}
+                        onChange={(e) => setForm({ ...form, endSec: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Lyric / caption text</label>
+                      <textarea
+                        rows={2}
+                        value={form.overlayText}
+                        onChange={(e) => setForm({ ...form, overlayText: e.target.value })}
+                        placeholder="Optional line to show with this artifact"
+                        className={`input-base w-full resize-none ${inp}`}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className={`text-[10px] uppercase tracking-wider mb-1 block ${lbl}`}>Tags (comma separated)</label>
+                      <input
+                        type="text"
+                        placeholder="N.W.A, West Coast, Compton"
+                        value={form.tags}
+                        onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                        className={`input-base w-full ${inp}`}
+                      />
+                    </div>
                   </div>
-                )}
+                  {formError && (
+                    <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/25 rounded-xl px-3 py-2">
+                      {formError}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    className={`flex items-center justify-center gap-2 border font-semibold rounded-xl px-4 py-2.5 text-sm w-full active:scale-[0.98] transition-all duration-150 ${addBtn}`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Artifact
+                  </button>
+                </form>
               </div>
             )}
 
             {/* ─── LIST ─── */}
             {tab === "list" && (
               <div className="p-3 space-y-1.5">
-                {locations.length === 0 ? (
+                {artifacts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-14 gap-3 text-center">
                     <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isDark ? "bg-white/4" : "bg-slate-100"}`}>
                       <svg className={`w-5 h-5 ${isDark ? "text-white/15" : "text-slate-300"}`} fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
                       </svg>
                     </div>
-                    <p className={`text-sm ${isDark ? "text-slate-600" : "text-slate-400"}`}>No locations yet</p>
-                    <p className={`text-xs ${isDark ? "text-slate-700" : "text-slate-300"}`}>Add or click the map</p>
+                    <p className={`text-sm ${isDark ? "text-slate-600" : "text-slate-400"}`}>No artifacts yet</p>
+                    <p className={`text-xs ${isDark ? "text-slate-700" : "text-slate-300"}`}>Add one or click the map</p>
                   </div>
-                ) : locations.map((loc, idx) => (
-                  <div key={loc.id}
+                ) : artifacts.map((artifact, idx) => (
+                  <div key={artifact.id}
                     className={`group flex items-start gap-2.5 rounded-xl border p-3 transition-all duration-150 ${listRow}`}>
                     <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[9px] font-bold text-white mt-0.5"
                       style={{ background: `hsl(${(idx * 47) % 360},65%,45%)` }}>
                       {idx + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium truncate ${listLabel}`}>{loc.label}</p>
-                      <p className={`text-[10px] font-mono mt-0.5 ${listSub}`}>{loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}</p>
+                      <p className={`text-xs font-medium truncate ${listLabel}`}>{artifact.title}</p>
+                      <p className={`text-[10px] mt-0.5 ${listSub}`}>
+                        {ARTIFACT_TYPE_LABEL[artifact.type]} - {artifact.resource.provider}
+                      </p>
+                      <p className={`text-[10px] font-mono mt-0.5 ${listSub}`}>
+                        {artifact.location.lat.toFixed(4)}, {artifact.location.lng.toFixed(4)}
+                      </p>
                       <div className="mt-1.5 flex items-center gap-1.5">
                         <div className={`flex-1 h-0.5 rounded-full overflow-hidden ${wbar}`}>
-                          <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500" style={{ width: `${loc.weight * 100}%` }} />
+                          <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500" style={{ width: `${artifact.weight * 100}%` }} />
                         </div>
-                        <span className={`text-[9px] font-mono ${listSub}`}>{loc.weight.toFixed(1)}</span>
+                        <span className={`text-[9px] font-mono ${listSub}`}>{artifact.weight.toFixed(1)}</span>
                       </div>
                     </div>
-                    <button onClick={() => onRemoveLocation(loc.id)}
+                    <button onClick={() => onRemoveArtifact(artifact.id)}
                       className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg hover:bg-red-500/15 text-slate-500 hover:text-red-400 transition-all shrink-0">
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />

@@ -3,7 +3,14 @@
 import { useEffect, useRef, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Location, HeatmapSettings, COLOR_SCHEMES, Theme } from "@/lib/types";
+import {
+  Artifact,
+  HeatmapSettings,
+  COLOR_SCHEMES,
+  Theme,
+  ARTIFACT_TYPE_COLOR,
+  ArtifactType,
+} from "@/lib/types";
 import {
   COMPTON_MASK_GEOJSON,
   COMPTON_BORDER_GEOJSON,
@@ -11,13 +18,13 @@ import {
 } from "@/lib/comptonBoundary";
 
 interface HeatmapMapProps {
-  locations: Location[];
+  artifacts: Artifact[];
   settings: HeatmapSettings;
   theme: Theme;
   /** Fired on general map clicks (fill add-form) */
   onMapClick?: (lat: number, lng: number) => void;
-  /** Fired when a known location dot is clicked */
-  onLocationClick?: (lat: number, lng: number, label: string) => void;
+  /** Fired when an artifact dot is clicked */
+  onArtifactClick?: (artifactId: string) => void;
 }
 
 function buildHeatmapColorExpr(
@@ -30,15 +37,37 @@ function buildHeatmapColorExpr(
   return expr as maplibregl.ExpressionSpecification;
 }
 
-function toGeoJSON(locations: Location[]): GeoJSON.FeatureCollection {
+function toGeoJSON(artifacts: Artifact[]): GeoJSON.FeatureCollection {
   return {
     type: "FeatureCollection",
-    features: locations.map(loc => ({
+    features: artifacts.map((artifact) => ({
       type: "Feature",
-      geometry: { type: "Point", coordinates: [loc.lng, loc.lat] },
-      properties: { weight: loc.weight, label: loc.label },
+      geometry: { type: "Point", coordinates: [artifact.location.lng, artifact.location.lat] },
+      properties: {
+        id: artifact.id,
+        weight: artifact.weight,
+        title: artifact.title,
+        locationName: artifact.location.name,
+        creator: artifact.creator ?? "",
+        type: artifact.type,
+      },
     })),
   };
+}
+
+function formatType(type?: string) {
+  switch (type as ArtifactType | undefined) {
+    case "song_snippet":
+      return "Song snippet";
+    case "music_video":
+      return "Music video";
+    case "film_snippet":
+      return "Movie/doc snippet";
+    case "image":
+      return "Image";
+    default:
+      return "Artifact";
+  }
 }
 
 const MASK_COLOR: Record<Theme, string> = {
@@ -52,16 +81,16 @@ const BORDER: Record<Theme, { glow: string; line: string }> = {
 };
 
 export default function HeatmapMap({
-  locations, settings, theme, onMapClick, onLocationClick,
+  artifacts, settings, theme, onMapClick, onArtifactClick,
 }: HeatmapMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<maplibregl.Map | null>(null);
   const loadedRef    = useRef(false);
 
-  const locationsRef = useRef(locations);
+  const artifactsRef = useRef(artifacts);
   const settingsRef  = useRef(settings);
   const themeRef     = useRef(theme);
-  locationsRef.current = locations;
+  artifactsRef.current = artifacts;
   settingsRef.current  = settings;
   themeRef.current     = theme;
 
@@ -135,9 +164,9 @@ export default function HeatmapMap({
       }});
 
       /* Heatmap */
-      map.addSource("locations-src", { type: "geojson", data: toGeoJSON(locationsRef.current) });
+      map.addSource("artifacts-src", { type: "geojson", data: toGeoJSON(artifactsRef.current) });
       map.addLayer({
-        id: "heatmap-layer", type: "heatmap", source: "locations-src",
+        id: "heatmap-layer", type: "heatmap", source: "artifacts-src",
         paint: {
           "heatmap-weight":     ["interpolate", ["linear"], ["get", "weight"], 0, 0, 1, 1],
           "heatmap-intensity":  ["interpolate", ["linear"], ["zoom"], 0, 0.5, 13, s.intensity, 16, s.intensity * 1.5],
@@ -149,12 +178,20 @@ export default function HeatmapMap({
 
       /* Dot layer (high zoom) */
       map.addLayer({
-        id: "dot-layer", type: "circle", source: "locations-src", minzoom: 14,
+        id: "dot-layer", type: "circle", source: "artifacts-src", minzoom: 14,
         paint: {
           "circle-radius":        ["interpolate", ["linear"], ["zoom"], 14, 3, 18, 14],
-          "circle-color":         "#ffffff",
+          "circle-color": [
+            "match",
+            ["get", "type"],
+            "song_snippet", ARTIFACT_TYPE_COLOR.song_snippet,
+            "image", ARTIFACT_TYPE_COLOR.image,
+            "music_video", ARTIFACT_TYPE_COLOR.music_video,
+            "film_snippet", ARTIFACT_TYPE_COLOR.film_snippet,
+            "#ffffff",
+          ],
           "circle-opacity":       ["interpolate", ["linear"], ["zoom"], 14, 0, 15.5, 0.9],
-          "circle-stroke-color":  "#22d3ee",
+          "circle-stroke-color":  "#ffffff",
           "circle-stroke-width":  1.8,
         },
       });
@@ -167,7 +204,13 @@ export default function HeatmapMap({
           const p = e.features[0].properties;
           const c = (e.features[0].geometry as GeoJSON.Point).coordinates;
           tooltip.setLngLat([c[0], c[1]])
-            .setHTML(`<div class="tooltip-content"><strong>${p.label || "Location"}</strong><span>${c[1].toFixed(5)}, ${c[0].toFixed(5)}</span></div>`)
+            .setHTML(
+              `<div class="tooltip-content"><strong>${p.title || "Artifact"}</strong><span>${formatType(
+                p.type
+              )} - ${p.locationName || "Compton"}</span><span>${c[1].toFixed(5)}, ${c[0].toFixed(
+                5
+              )}</span></div>`
+            )
             .addTo(map);
         }
       });
@@ -179,12 +222,11 @@ export default function HeatmapMap({
 
     /* ── Click handlers ───────────────────────────────────────────────── */
 
-    // Click on a known location dot → fire onLocationClick
+    // Click on a known artifact dot → fire onArtifactClick
     map.on("click", "dot-layer", e => {
       if (!e.features?.[0]) return;
       const p = e.features[0].properties;
-      const c = (e.features[0].geometry as GeoJSON.Point).coordinates;
-      onLocationClick?.(c[1], c[0], p.label || "Location");
+      if (p?.id) onArtifactClick?.(p.id as string);
       e.originalEvent.stopPropagation();
     });
 
@@ -211,9 +253,9 @@ export default function HeatmapMap({
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
     try {
-      (map.getSource("locations-src") as maplibregl.GeoJSONSource)?.setData(toGeoJSON(locations));
+      (map.getSource("artifacts-src") as maplibregl.GeoJSONSource)?.setData(toGeoJSON(artifacts));
     } catch { /* map may have been removed */ }
-  }, [locations]);
+  }, [artifacts]);
 
   /* ── Sync settings ───────────────────────────────────────────────── */
   useEffect(() => {

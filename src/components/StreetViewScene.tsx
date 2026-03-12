@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
-import { Theme, Location } from "@/lib/types";
+import { Artifact, ARTIFACT_TYPE_LABEL, Theme } from "@/lib/types";
 
 declare global {
   interface Window { gm_authFailure?: () => void }
@@ -25,9 +25,9 @@ interface Props {
    *  panorama opens facing back toward the previous location. */
   heading?: number;
   theme: Theme;
-  locations: Location[];
-  showPins: boolean;
-  onPinClick?: (lat: number, lng: number, label: string) => void;
+  artifacts: Artifact[];
+  showArtifacts: boolean;
+  onArtifactClick?: (artifactId: string) => void;
 }
 
 // ── Tunable pin lift ───────────────────────────────────────────────
@@ -91,7 +91,7 @@ function ensureAnimation() {
   document.head.appendChild(s);
 }
 
-/* ── Build the pin DOM element ─────────────────────────────────────── */
+/* ── Build the marker DOM element ──────────────────────────────────── */
 function makePinEl(label: string, isDark: boolean): HTMLDivElement {
   ensureAnimation();
   const ring  = isDark ? "rgba(34,211,238,0.35)"  : "rgba(2,132,199,0.3)";
@@ -147,7 +147,7 @@ class StreetViewPin {
     isDark: boolean,
     panorama: google.maps.StreetViewPanorama,
     container: HTMLDivElement,
-    onPinClick?: (lat: number, lng: number, label: string) => void
+    onPinClick?: () => void
   ) {
     this.el = makePinEl(label, isDark);
     const el = this.el;
@@ -155,7 +155,7 @@ class StreetViewPin {
     if (onPinClick) {
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        onPinClick(pos.lat(), pos.lng(), label);
+        onPinClick();
       });
     }
 
@@ -226,7 +226,14 @@ class StreetViewPin {
 }
 
 /* ── Main component ────────────────────────────────────────────────── */
-export default function StreetViewScene({ lat, lng, heading, theme, locations, showPins, onPinClick }: Props) {
+export default function StreetViewScene({
+  lat,
+  lng,
+  theme,
+  artifacts,
+  showArtifacts,
+  onArtifactClick,
+}: Props) {
   const containerRef  = useRef<HTMLDivElement>(null);
   const panoramaRef   = useRef<google.maps.StreetViewPanorama | null>(null);
   const pinsRef       = useRef<StreetViewPin[]>([]);
@@ -297,7 +304,7 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
               initialHeadingApplied = true;
               pano.setPov({ heading: targetHeading, pitch: 0 });
             }
-            buildPins(pano, locations, isDark, showPins, onPinClick);
+            buildPins(pano, artifacts, isDark, showArtifacts, onArtifactClick);
           });
           setState("ready");
         });
@@ -311,30 +318,30 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
       pinsRef.current = [];
       panoramaRef.current = null;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lat, lng]);
+  }, [lat, lng, artifacts, isDark, showArtifacts, onArtifactClick]);
 
-  /* ── Sync pin visibility ─────────────────────────────────────────── */
+  /* ── Sync marker visibility ──────────────────────────────────────── */
   useEffect(() => {
-    pinsRef.current.forEach(p => p.setVisible(showPins));
-  }, [showPins]);
+    pinsRef.current.forEach(p => p.setVisible(showArtifacts));
+  }, [showArtifacts]);
 
-  /* ── Build / rebuild pins ────────────────────────────────────────── */
+  /* ── Build / rebuild markers ─────────────────────────────────────── */
   function buildPins(
     pano: google.maps.StreetViewPanorama,
-    locs: Location[],
+    points: Artifact[],
     dark: boolean,
     visible: boolean,
-    clickCb?: (lat: number, lng: number, label: string) => void
+    clickCb?: (artifactId: string) => void
   ) {
     pinsRef.current.forEach(p => p.remove());
     pinsRef.current = [];
     if (!containerRef.current) return;
     const cont = containerRef.current;
     const gmLatLng = (window as unknown as { google: typeof google }).google.maps.LatLng;
-    locs.forEach(loc => {
-      const posObj = new gmLatLng(loc.lat, loc.lng);
-      const pin = new StreetViewPin(posObj, loc.label, dark, pano, cont, clickCb);
+    points.forEach((artifact) => {
+      const posObj = new gmLatLng(artifact.location.lat, artifact.location.lng);
+      const label = `${ARTIFACT_TYPE_LABEL[artifact.type]}: ${artifact.title}`;
+      const pin = new StreetViewPin(posObj, label, dark, pano, cont, () => clickCb?.(artifact.id));
       if (!visible) pin.setVisible(false);
       pinsRef.current.push(pin);
     });

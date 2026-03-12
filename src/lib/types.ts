@@ -4,18 +4,53 @@ export interface StreetViewLocation {
   lat: number;
   lng: number;
   label: string;
+  artifactId?: string;
   /** Initial camera heading (degrees, 0 = north). Set when teleporting so the
    *  panorama opens facing back toward the location you came from. */
   heading?: number;
 }
 
-export interface Location {
+export type ArtifactType = "song_snippet" | "image" | "music_video" | "film_snippet";
+export type ArtifactProvider = "spotify" | "youtube" | "image_url" | "other";
+
+export interface Artifact {
   id: string;
-  lat: number;
-  lng: number;
-  label: string;
+  type: ArtifactType;
+  title: string;
+  creator?: string;
+  year?: number;
+  location: {
+    name: string;
+    lat: number;
+    lng: number;
+  };
+  resource: {
+    provider: ArtifactProvider;
+    url: string;
+    startSec?: number;
+    endSec?: number;
+    thumbnailUrl?: string;
+  };
+  overlayText?: string;
+  tags?: string[];
   weight: number;
 }
+
+export type NewArtifact = Omit<Artifact, "id">;
+
+export const ARTIFACT_TYPE_LABEL: Record<ArtifactType, string> = {
+  song_snippet: "Song snippet",
+  image: "Image",
+  music_video: "Music video",
+  film_snippet: "Movie/doc snippet",
+};
+
+export const ARTIFACT_TYPE_COLOR: Record<ArtifactType, string> = {
+  song_snippet: "#22d3ee",
+  image: "#f59e0b",
+  music_video: "#a78bfa",
+  film_snippet: "#f97316",
+};
 
 export interface HeatmapSettings {
   radius: number;

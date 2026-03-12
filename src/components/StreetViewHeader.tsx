@@ -1,17 +1,26 @@
 "use client";
 
-import { Theme, StreetViewLocation } from "@/lib/types";
+import { Artifact, ARTIFACT_TYPE_LABEL, Theme, StreetViewLocation } from "@/lib/types";
 
 interface Props {
   location: StreetViewLocation;
+  artifact: Artifact | null;
   theme: Theme;
-  showPins: boolean;
+  showArtifacts: boolean;
   onClose: () => void;
   onToggleTheme: () => void;
-  onTogglePins: () => void;
+  onToggleArtifacts: () => void;
 }
 
-export default function StreetViewHeader({ location, theme, showPins, onClose, onToggleTheme, onTogglePins }: Props) {
+export default function StreetViewHeader({
+  location,
+  artifact,
+  theme,
+  showArtifacts,
+  onClose,
+  onToggleTheme,
+  onToggleArtifacts,
+}: Props) {
   const isDark = theme === "dark";
 
   const externalUrl = `https://www.google.com/maps?q=${location.lat},${location.lng}&layer=c&cbll=${location.lat},${location.lng}`;
@@ -51,7 +60,13 @@ export default function StreetViewHeader({ location, theme, showPins, onClose, o
             </svg>
           </div>
           <div>
-            <p className="text-[13px] font-semibold leading-tight">{location.label}</p>
+            <p className="text-[13px] font-semibold leading-tight">{artifact?.title ?? location.label}</p>
+            {artifact && (
+              <p className={`text-[10px] mt-0.5 ${isDark ? "text-cyan-400/80" : "text-sky-600/85"}`}>
+                {ARTIFACT_TYPE_LABEL[artifact.type]}
+                {artifact.creator ? ` - ${artifact.creator}` : ""}
+              </p>
+            )}
             <p className={`text-[10px] font-mono mt-0.5 ${isDark ? "text-slate-600" : "text-slate-400"}`}>
               {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
             </p>
@@ -74,22 +89,36 @@ export default function StreetViewHeader({ location, theme, showPins, onClose, o
           Google Maps
         </a>
 
+        {artifact && (
+          <a
+            href={artifact.resource.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center gap-1.5 h-9 px-3 rounded-xl border backdrop-blur-xl text-xs font-medium transition-all duration-150 ${extBtnCls}`}
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            Artifact
+          </a>
+        )}
+
         {/* Pins toggle */}
         <button
-          onClick={onTogglePins}
+          onClick={onToggleArtifacts}
           className={`flex items-center gap-1.5 h-9 px-3 rounded-xl border backdrop-blur-xl transition-all duration-200 text-xs font-semibold ${
-            showPins
+            showArtifacts
               ? isDark
                 ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-300"
                 : "bg-sky-500/10 border-sky-400/50 text-sky-700"
               : iconBtnCls
           }`}
-          title={showPins ? "Hide location pins" : "Show location pins"}
+          title={showArtifacts ? "Hide artifact markers" : "Show artifact markers"}
         >
           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
           </svg>
-          Pins
+          Markers
         </button>
 
         {/* Theme toggle */}

@@ -1,9 +1,9 @@
 "use client";
 
-import { Location, Theme } from "@/lib/types";
+import { Artifact, Theme } from "@/lib/types";
 
 interface HeaderProps {
-  locations: Location[];
+  artifacts: Artifact[];
   theme: Theme;
   onToggleTheme: () => void;
   onClearAll: () => void;
@@ -12,14 +12,14 @@ interface HeaderProps {
 }
 
 export default function Header({
-  locations,
+  artifacts,
   theme,
   onToggleTheme,
   onClearAll,
   sidebarOpen,
   onToggleSidebar,
 }: HeaderProps) {
-  const totalWeight = locations.reduce((acc, l) => acc + l.weight, 0);
+  const totalWeight = artifacts.reduce((acc, artifact) => acc + artifact.weight, 0);
   const isDark = theme === "dark";
 
   /* ── Shared variants ───────────────────────────────────────────────── */
@@ -60,11 +60,11 @@ export default function Header({
             </div>
             <span className="font-bold tracking-tight text-[15px]">Compton</span>
             <span className={`font-bold tracking-tight text-[15px] ${isDark ? "text-cyan-400" : "text-sky-600"}`}>
-              Heat
+              Artifacts
             </span>
           </div>
           <p className={`text-[9px] tracking-[0.18em] uppercase mt-0.5 ${muted}`}>
-            Location Heatmap
+            Cultural reference heatmap
           </p>
         </div>
       </div>
@@ -76,8 +76,8 @@ export default function Header({
           <svg className={`w-3.5 h-3.5 shrink-0 ${isDark ? "text-cyan-400" : "text-sky-500"}`} fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
           </svg>
-          <span className="text-sm font-bold tabular-nums">{locations.length}</span>
-          <span className={`text-xs ${muted}`}>pts</span>
+          <span className="text-sm font-bold tabular-nums">{artifacts.length}</span>
+          <span className={`text-xs ${muted}`}>artifacts</span>
         </div>
 
         {/* Weight */}
@@ -108,7 +108,7 @@ export default function Header({
         </button>
 
         {/* Clear all */}
-        {locations.length > 0 && (
+        {artifacts.length > 0 && (
           <button
             onClick={onClearAll}
             className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/25 backdrop-blur-xl rounded-xl px-3 py-2 text-red-400 hover:bg-red-500/20 hover:border-red-400/50 transition-all duration-200 text-xs font-semibold shadow-lg shadow-black/30"

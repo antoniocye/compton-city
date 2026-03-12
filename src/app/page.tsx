@@ -2,8 +2,14 @@
 
 import dynamic from "next/dynamic";
 import { useState, useCallback, useEffect } from "react";
-import { Location, HeatmapSettings, Theme, StreetViewLocation } from "@/lib/types";
-import { SAMPLE_LOCATIONS } from "@/lib/sampleData";
+import {
+  Artifact,
+  HeatmapSettings,
+  NewArtifact,
+  Theme,
+  StreetViewLocation,
+} from "@/lib/types";
+import { SAMPLE_ARTIFACTS } from "@/lib/sampleData";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import Legend from "@/components/Legend";
@@ -24,7 +30,7 @@ const HeatmapMap = dynamic(() => import("@/components/HeatmapMap"), {
 
 const StreetViewScene = dynamic(() => import("@/components/StreetViewScene"), { ssr: false });
 
-let nextId = SAMPLE_LOCATIONS.length + 1;
+let nextId = SAMPLE_ARTIFACTS.length + 1;
 
 function distanceM(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6_371_000;
@@ -54,26 +60,35 @@ function computeHeading(
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
-/** Returns the closest Location in the list to (lat, lng) */
-function findNearest(lat: number, lng: number, locs: Location[]): Location | null {
-  if (!locs.length) return null;
-  let best = locs[0];
-  let bestD = distanceM(lat, lng, best.lat, best.lng);
-  for (let i = 1; i < locs.length; i++) {
-    const d = distanceM(lat, lng, locs[i].lat, locs[i].lng);
-    if (d < bestD) { bestD = d; best = locs[i]; }
+/** Returns the closest artifact in the list to (lat, lng) */
+function findNearest(lat: number, lng: number, points: Artifact[]): Artifact | null {
+  if (!points.length) return null;
+  let best = points[0];
+  let bestD = distanceM(lat, lng, best.location.lat, best.location.lng);
+  for (let i = 1; i < points.length; i++) {
+    const d = distanceM(lat, lng, points[i].location.lat, points[i].location.lng);
+    if (d < bestD) { bestD = d; best = points[i]; }
   }
   return best;
 }
 
+function toStreetViewLocation(artifact: Artifact): StreetViewLocation {
+  return {
+    lat: artifact.location.lat,
+    lng: artifact.location.lng,
+    label: artifact.location.name,
+    artifactId: artifact.id,
+  };
+}
+
 export default function Home() {
-  const [locations,    setLocations]    = useState<Location[]>(SAMPLE_LOCATIONS);
+  const [artifacts,    setArtifacts]    = useState<Artifact[]>(SAMPLE_ARTIFACTS);
   const [settings,     setSettings]     = useState<HeatmapSettings>({ radius: 30, intensity: 1.5, opacity: 0.85, colorScheme: "fire" });
   const [theme,        setTheme]        = useState<Theme>("dark");
   const [sidebarOpen,  setSidebarOpen]  = useState(true);
   const [pending,      setPending]      = useState<{ lat: number; lng: number } | null>(null);
   const [streetView,   setStreetView]   = useState<StreetViewLocation | null>(null);
-  const [showPins,     setShowPins]     = useState(true);
+  const [showArtifacts, setShowArtifacts] = useState(true);
 
   // Sync dark/light class on <html>
   useEffect(() => {
@@ -84,50 +99,68 @@ export default function Home() {
   const toggleTheme      = useCallback(() => setTheme(t => t === "dark" ? "light" : "dark"), []);
   const closeStreetView  = useCallback(() => setStreetView(null), []);
 
-  const handleAddLocation    = useCallback((loc: Omit<Location, "id">) => {
-    setLocations(p => [...p, { ...loc, id: `u${nextId++}` }]);
+  const handleAddArtifact = useCallback((artifact: NewArtifact) => {
+    setArtifacts((current) => [...current, { ...artifact, id: `u${nextId++}` }]);
   }, []);
-  const handleRemoveLocation = useCallback((id: string) => {
-    setLocations(p => p.filter(l => l.id !== id));
+  const handleRemoveArtifact = useCallback((id: string) => {
+    setArtifacts((current) => current.filter((artifact) => artifact.id !== id));
+    setStreetView((current) => {
+      if (!current || current.artifactId !== id) return current;
+      return null;
+    });
   }, []);
 
   // General map click → fill form + snap street view to nearest location
   const handleMapClick = useCallback((lat: number, lng: number) => {
     setPending({ lat, lng });
     setSidebarOpen(true);
-    const nearest = findNearest(lat, lng, locations);
+    const nearest = findNearest(lat, lng, artifacts);
     if (nearest) {
-      setStreetView({ lat: nearest.lat, lng: nearest.lng, label: nearest.label });
+      setStreetView(toStreetViewLocation(nearest));
     } else {
       setStreetView({ lat, lng, label: `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
     }
-  }, [locations]);
+  }, [artifacts]);
 
-  // Dot click → open street view with known label (exact position)
-  const handleLocationClick = useCallback((lat: number, lng: number, label: string) => {
-    setStreetView({ lat, lng, label });
-  }, []);
+  // Dot click → open street view with the selected artifact
+  const handleArtifactClick = useCallback((artifactId: string) => {
+    const artifact = artifacts.find((item) => item.id === artifactId);
+    if (!artifact) return;
+    setStreetView(toStreetViewLocation(artifact));
+  }, [artifacts]);
 
   // Mini-map click → snap to nearest location
   const handleTeleport = useCallback((lat: number, lng: number) => {
-    const nearest = findNearest(lat, lng, locations);
+    const nearest = findNearest(lat, lng, artifacts);
     if (nearest) {
-      setStreetView({ lat: nearest.lat, lng: nearest.lng, label: nearest.label });
+      setStreetView(toStreetViewLocation(nearest));
     } else {
       setStreetView({ lat, lng, label: `${lat.toFixed(4)}, ${lng.toFixed(4)}` });
     }
-  }, [locations]);
+  }, [artifacts]);
 
-  // Pin click → jump to pin's location facing the same direction we were looking
-  // (bearing FROM old position TOWARD the pin = the direction you were looking)
-  const handlePinClick = useCallback((lat: number, lng: number, label: string) => {
+  // Marker click → jump to artifact location while preserving view continuity.
+  const handleStreetViewArtifactClick = useCallback((artifactId: string) => {
+    const artifact = artifacts.find((item) => item.id === artifactId);
+    if (!artifact) return;
+    const lat = artifact.location.lat;
+    const lng = artifact.location.lng;
     const heading = streetView
       ? computeHeading(streetView.lat, streetView.lng, lat, lng)
       : 0;
-    setStreetView({ lat, lng, label, heading });
-  }, [streetView]);
+    setStreetView({
+      lat,
+      lng,
+      label: artifact.location.name,
+      artifactId: artifact.id,
+      heading,
+    });
+  }, [artifacts, streetView]);
 
   const inStreetView = streetView !== null;
+  const activeArtifact = streetView?.artifactId
+    ? artifacts.find((artifact) => artifact.id === streetView.artifactId) ?? null
+    : null;
 
   return (
     <div className={`relative w-screen h-screen overflow-hidden ${theme === "dark" ? "bg-[#06091a]" : "bg-slate-200"}`}>
@@ -139,32 +172,32 @@ export default function Home() {
         }`}
       >
         <HeatmapMap
-          locations={locations}
+          artifacts={artifacts}
           settings={settings}
           theme={theme}
           onMapClick={handleMapClick}
-          onLocationClick={handleLocationClick}
+          onArtifactClick={handleArtifactClick}
         />
       </div>
 
       {/* ── Regular UI (header / sidebar / legend) ── */}
       <div className={`transition-opacity duration-300 ${inStreetView ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
         <Header
-          locations={locations}
+          artifacts={artifacts}
           theme={theme}
           onToggleTheme={toggleTheme}
-          onClearAll={() => setLocations([])}
+          onClearAll={() => setArtifacts([])}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(v => !v)}
         />
         <Sidebar
-          locations={locations}
+          artifacts={artifacts}
           settings={settings}
           isOpen={sidebarOpen}
           theme={theme}
           pendingCoords={pending}
-          onAddLocation={handleAddLocation}
-          onRemoveLocation={handleRemoveLocation}
+          onAddArtifact={handleAddArtifact}
+          onRemoveArtifact={handleRemoveArtifact}
           onUpdateSettings={setSettings}
           onClearPending={() => setPending(null)}
         />
@@ -180,24 +213,25 @@ export default function Home() {
             lng={streetView.lng}
             heading={streetView.heading}
             theme={theme}
-            locations={locations}
-            showPins={showPins}
-            onPinClick={handlePinClick}
+            artifacts={artifacts}
+            showArtifacts={showArtifacts}
+            onArtifactClick={handleStreetViewArtifactClick}
           />
 
           {/* Top header overlay */}
           <StreetViewHeader
             location={streetView}
+            artifact={activeArtifact}
             theme={theme}
-            showPins={showPins}
+            showArtifacts={showArtifacts}
             onClose={closeStreetView}
             onToggleTheme={toggleTheme}
-            onTogglePins={() => setShowPins(v => !v)}
+            onToggleArtifacts={() => setShowArtifacts(v => !v)}
           />
 
           {/* Mini heatmap in bottom-right corner */}
           <MiniMap
-            locations={locations}
+            artifacts={artifacts}
             settings={settings}
             theme={theme}
             focusLat={streetView.lat}

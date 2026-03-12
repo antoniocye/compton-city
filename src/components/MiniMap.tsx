@@ -2,11 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
-import { Location, HeatmapSettings, Theme, COLOR_SCHEMES } from "@/lib/types";
+import { Artifact, HeatmapSettings, Theme, COLOR_SCHEMES } from "@/lib/types";
 import { COMPTON_BORDER_GEOJSON } from "@/lib/comptonBoundary";
 
 interface MiniMapProps {
-  locations: Location[];
+  artifacts: Artifact[];
   settings: HeatmapSettings;
   theme: Theme;
   focusLat: number;
@@ -26,7 +26,7 @@ function buildColorExpr(scheme: HeatmapSettings["colorScheme"]) {
 }
 
 export default function MiniMap({
-  locations, settings, theme,
+  artifacts, settings, theme,
   focusLat, focusLng,
   onTeleport, onExpand,
 }: MiniMapProps) {
@@ -79,10 +79,10 @@ export default function MiniMap({
         type: "geojson",
         data: {
           type: "FeatureCollection",
-          features: locations.map(l => ({
+          features: artifacts.map((artifact) => ({
             type: "Feature",
-            geometry: { type: "Point", coordinates: [l.lng, l.lat] },
-            properties: { weight: l.weight },
+            geometry: { type: "Point", coordinates: [artifact.location.lng, artifact.location.lat] },
+            properties: { weight: artifact.weight },
           })),
         },
       });
