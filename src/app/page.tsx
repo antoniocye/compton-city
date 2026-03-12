@@ -127,10 +127,6 @@ export default function Home() {
         : null,
     [summaries, selectedLocationId]
   );
-  const totalWeight = useMemo(
-    () => filteredArtifacts.reduce((sum, artifact) => sum + artifact.heatWeight, 0),
-    [filteredArtifacts]
-  );
   const streetViewRef = useRef<StreetViewLocation | null>(null);
 
   // Sync dark/light class on <html>
@@ -262,7 +258,6 @@ export default function Home() {
         <Header
           locationCount={summaries.length}
           artifactCount={filteredArtifacts.length}
-          totalWeight={totalWeight}
           theme={theme}
           onToggleTheme={toggleTheme}
           sidebarOpen={sidebarOpen}

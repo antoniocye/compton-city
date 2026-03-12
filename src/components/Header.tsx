@@ -5,7 +5,6 @@ import { Theme } from "@/lib/types";
 interface HeaderProps {
   locationCount: number;
   artifactCount: number;
-  totalWeight: number;
   theme: Theme;
   onToggleTheme: () => void;
   sidebarOpen: boolean;
@@ -13,7 +12,7 @@ interface HeaderProps {
 }
 
 export default function Header({
-  locationCount, artifactCount, totalWeight,
+  locationCount, artifactCount,
   theme, onToggleTheme, sidebarOpen, onToggleSidebar,
 }: HeaderProps) {
   const isDark = theme === "dark";
@@ -69,14 +68,6 @@ export default function Header({
           <span className={`text-xs ${muted}`}>artifacts</span>
         </div>
 
-        <div className={`flex items-center gap-2 border backdrop-blur-sm rounded-xl px-3 py-2 transition-all ${chip}`}>
-          <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z" />
-          </svg>
-          <span className="text-sm font-bold tabular-nums">{totalWeight.toFixed(1)}</span>
-          <span className={`text-xs ${muted}`}>heat</span>
-        </div>
-
         {/* Settings */}
         <button onClick={onToggleSidebar}
           className={`flex items-center justify-center w-9 h-9 rounded-xl border backdrop-blur-sm transition-all ${
@@ -87,10 +78,14 @@ export default function Header({
               : btn
           }`}
           title={sidebarOpen ? "Close settings" : "Settings"}>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M11.983 5.5a1.5 1.5 0 013.034 0l.173 1.21a1.5 1.5 0 001.133 1.24l1.182.295a1.5 1.5 0 01.72 2.495l-.83.896a1.5 1.5 0 000 2.043l.83.896a1.5 1.5 0 01-.72 2.495l-1.182.295a1.5 1.5 0 00-1.133 1.24l-.173 1.21a1.5 1.5 0 01-3.034 0l-.173-1.21a1.5 1.5 0 00-1.133-1.24l-1.182-.295a1.5 1.5 0 01-.72-2.495l.83-.896a1.5 1.5 0 000-2.043l-.83-.896a1.5 1.5 0 01.72-2.495l1.182-.295a1.5 1.5 0 001.133-1.24l.173-1.21z" />
-            <circle cx="13.5" cy="12" r="2.25" strokeWidth={2} />
+          {/* Sliders / adjustments icon */}
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+            <line x1="4"  y1="6"  x2="20" y2="6"  />
+            <line x1="4"  y1="12" x2="20" y2="12" />
+            <line x1="4"  y1="18" x2="20" y2="18" />
+            <circle cx="8"  cy="6"  r="2" fill="currentColor" stroke="none" />
+            <circle cx="16" cy="12" r="2" fill="currentColor" stroke="none" />
+            <circle cx="10" cy="18" r="2" fill="currentColor" stroke="none" />
           </svg>
         </button>
 

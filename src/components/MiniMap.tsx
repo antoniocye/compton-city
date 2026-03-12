@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import {
   COLOR_SCHEMES,
+  STREET_COLORS,
   HeatmapSettings,
   Theme,
   LocationSummary,
@@ -31,19 +32,17 @@ function buildColorExpr(scheme: HeatmapSettings["colorScheme"]) {
   return expr as maplibregl.ExpressionSpecification;
 }
 
-function buildStreetCoreColor(): maplibregl.ExpressionSpecification {
-  return [
-    "interpolate", ["linear"], ["get", "weight"],
-    0, "rgba(200,130,20,0.85)",
-    1, "rgba(255,215,50,1)",
+function buildStreetCoreColor(scheme: HeatmapSettings["colorScheme"]): maplibregl.ExpressionSpecification {
+  const c = STREET_COLORS[scheme].core;
+  return ["interpolate", ["linear"], ["get", "weight"],
+    0, `${c}0.75)`, 1, `${c}1)`,
   ] as maplibregl.ExpressionSpecification;
 }
 
-function buildStreetGlowColor(): maplibregl.ExpressionSpecification {
-  return [
-    "interpolate", ["linear"], ["get", "weight"],
-    0, "rgba(200,100,0,0.5)",
-    1, "rgba(255,185,20,0.7)",
+function buildStreetGlowColor(scheme: HeatmapSettings["colorScheme"]): maplibregl.ExpressionSpecification {
+  const c = STREET_COLORS[scheme].glow;
+  return ["interpolate", ["linear"], ["get", "weight"],
+    0, `${c}0.45)`, 1, `${c}0.70)`,
   ] as maplibregl.ExpressionSpecification;
 }
 
@@ -141,7 +140,7 @@ export default function MiniMap({
       map.addLayer({ id: "streets-glow", type: "line", source: "streets-src",
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
-          "line-color":   buildStreetGlowColor(),
+          "line-color":   buildStreetGlowColor(settings.colorScheme),
           "line-width":   8,
           "line-blur":    6,
           "line-opacity": settings.opacity * 0.35,
@@ -150,7 +149,7 @@ export default function MiniMap({
       map.addLayer({ id: "streets-core", type: "line", source: "streets-src",
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
-          "line-color":   buildStreetCoreColor(),
+          "line-color":   buildStreetCoreColor(settings.colorScheme),
           "line-width":   2.5,
           "line-opacity": settings.opacity * 0.85,
         },
@@ -244,32 +243,45 @@ export default function MiniMap({
       map.setPaintProperty("heat-layer", "heatmap-color", buildColorExpr(settings.colorScheme));
       map.setPaintProperty("heat-layer", "heatmap-radius", settings.radius * 0.5);
       map.setPaintProperty("heat-layer", "heatmap-opacity", settings.opacity * 0.9);
+      map.setPaintProperty("streets-glow", "line-color",   buildStreetGlowColor(settings.colorScheme));
       map.setPaintProperty("streets-glow", "line-opacity", settings.opacity * 0.35);
+      map.setPaintProperty("streets-core", "line-color",   buildStreetCoreColor(settings.colorScheme));
       map.setPaintProperty("streets-core", "line-opacity", settings.opacity * 0.85);
     } catch { /* map may have been removed */ }
   }, [settings]);
 
   const borderCls = isDark ? "border-zinc-700 shadow-black/50" : "border-zinc-300 shadow-black/15";
 
+  const btnCls = isDark
+    ? "bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
+    : "bg-white border border-zinc-300 text-zinc-500 hover:text-zinc-700";
+
   return (
-    <div
-      className="absolute bottom-24 right-6 z-20"
-      style={{ width: 236, height: 158 }}
-    >
-      {/* Map canvas — cursor crosshair signals "click to teleport" */}
+    <div className="absolute bottom-24 right-6 z-20" style={{ width: 236, height: 158 }}>
+      {/* Map canvas */}
       <div
         ref={containerRef}
         className={`w-full h-full rounded-2xl overflow-hidden border shadow-2xl cursor-crosshair ${borderCls}`}
       />
 
-      {/* Expand / fullscreen button — top-right */}
+      {/* Zoom buttons — left side */}
+      <div className="absolute left-2 top-1/2 -translate-y-1/2 flex flex-col gap-1">
+        <button
+          onClick={(e) => { e.stopPropagation(); mapRef.current?.zoomIn(); }}
+          className={`w-6 h-6 rounded-lg flex items-center justify-center text-sm font-bold transition-all ${btnCls}`}
+          title="Zoom in"
+        >+</button>
+        <button
+          onClick={(e) => { e.stopPropagation(); mapRef.current?.zoomOut(); }}
+          className={`w-6 h-6 rounded-lg flex items-center justify-center text-sm font-bold transition-all ${btnCls}`}
+          title="Zoom out"
+        >−</button>
+      </div>
+
+      {/* Expand button — top-right */}
       <button
         onClick={(e) => { e.stopPropagation(); onExpand(); }}
-        className={`absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-150 ${
-          isDark
-            ? "bg-zinc-900 border border-zinc-700 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800"
-            : "bg-white border border-zinc-300 text-zinc-500 hover:text-zinc-800"
-        }`}
+        className={`absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center transition-all ${btnCls}`}
         title="Back to full map"
       >
         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -278,13 +290,11 @@ export default function MiniMap({
         </svg>
       </button>
 
-      {/* Teleport hint — bottom, always visible */}
-      <div className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none">
-        <span className={`text-[9px] px-2 py-0.5 rounded-md ${
-          isDark ? "bg-zinc-900 text-zinc-600" : "bg-white text-zinc-400"
-        }`}>
-          Click to teleport
-        </span>
+      {/* Teleport hint */}
+      <div className="absolute bottom-1.5 left-0 right-0 flex justify-center pointer-events-none">
+        <span className={`text-[9px] px-1.5 py-0.5 rounded ${
+          isDark ? "bg-zinc-900 text-zinc-600" : "bg-white/90 text-zinc-400"
+        }`}>tap to teleport</span>
       </div>
     </div>
   );

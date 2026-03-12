@@ -67,15 +67,19 @@ function haversineM(lat1: number, lng1: number, lat2: number, lng2: number) {
 }
 
 /**
- * Smooth inverse-proportion scale:
- *   < 20 m  → 1.0  (full size)
- *   ~200 m  → 0.47
- *   ~800 m  → 0.18 (minimum threshold)
- *   > ~850m → hidden (returns 0)
+ * Distance → pin scale. Uses a gentler power curve so pins at medium/far
+ * distances stay more visible than a pure inverse-proportion falloff.
+ *   < 20 m   → 1.00
+ *   ~150 m   → 0.75
+ *   ~400 m   → 0.55
+ *   ~800 m   → 0.38
+ *   ~1400 m  → 0.25
+ *   > ~1600m → hidden (returns 0)
  */
 function distanceToScale(metres: number): number {
-  const s = 1 / (1 + metres / 180);
-  return s < 0.18 ? 0 : s;
+  if (metres < 20) return 1;
+  const s = Math.pow(20 / metres, 0.45);
+  return s < 0.22 ? 0 : s;
 }
 
 /* ── Build the pin DOM element ─────────────────────────────────────── */
@@ -229,7 +233,8 @@ class StreetViewPin {
         el.style.left      = `${px.x}px`;
         el.style.top       = `${anchorY}px`;
         el.style.transform = `scale(${scale})`;
-        el.style.opacity   = String(Math.min(1, scale * 1.4));
+        // Keep opacity higher at distance — scale itself handles the visual shrink
+        el.style.opacity   = String(Math.min(1, 0.35 + scale * 0.9));
       }
       onRemove() { el.remove(); }
     }

@@ -148,7 +148,7 @@ export interface HeatmapSettings {
   radius: number;
   intensity: number;
   opacity: number;
-  colorScheme: "fire" | "ocean" | "plasma" | "viridis";
+  colorScheme: "fire" | "ocean" | "plasma" | "viridis" | "ember" | "arctic" | "crimson" | "infrared";
 }
 
 export const COLOR_SCHEMES: Record<
@@ -191,4 +191,55 @@ export const COLOR_SCHEMES: Record<
     [0.9, "rgba(200,230,30,1)"],
     [1,   "rgba(253,231,37,1)"],
   ],
+  ember: [
+    [0,   "rgba(0,0,0,0)"],
+    [0.1, "rgba(60,10,0,0.7)"],
+    [0.3, "rgba(140,40,0,0.85)"],
+    [0.5, "rgba(210,90,0,0.95)"],
+    [0.7, "rgba(255,160,20,1)"],
+    [0.9, "rgba(255,215,80,1)"],
+    [1,   "rgba(255,245,180,1)"],
+  ],
+  arctic: [
+    [0,   "rgba(0,0,0,0)"],
+    [0.1, "rgba(0,20,50,0.7)"],
+    [0.3, "rgba(0,70,160,0.85)"],
+    [0.5, "rgba(0,140,230,0.95)"],
+    [0.7, "rgba(40,200,255,1)"],
+    [0.9, "rgba(150,235,255,1)"],
+    [1,   "rgba(220,248,255,1)"],
+  ],
+  crimson: [
+    [0,   "rgba(0,0,0,0)"],
+    [0.1, "rgba(50,0,0,0.7)"],
+    [0.3, "rgba(140,0,0,0.85)"],
+    [0.5, "rgba(210,0,20,0.95)"],
+    [0.7, "rgba(255,60,60,1)"],
+    [0.9, "rgba(255,160,120,1)"],
+    [1,   "rgba(255,230,220,1)"],
+  ],
+  infrared: [
+    [0,   "rgba(0,0,0,0)"],
+    [0.1, "rgba(0,40,0,0.7)"],
+    [0.3, "rgba(0,120,40,0.85)"],
+    [0.5, "rgba(80,200,0,0.95)"],
+    [0.7, "rgba(200,240,0,1)"],
+    [0.9, "rgba(255,200,0,1)"],
+    [1,   "rgba(255,255,180,1)"],
+  ],
+};
+
+/** Street glow/core colors per scheme — used for the glowing road overlay */
+export const STREET_COLORS: Record<
+  HeatmapSettings["colorScheme"],
+  { glow: string; core: string }
+> = {
+  fire:     { glow: "rgba(220,100,0,",   core: "rgba(255,200,40,"  },
+  ocean:    { glow: "rgba(0,150,200,",   core: "rgba(60,230,210,"  },
+  plasma:   { glow: "rgba(220,30,70,",   core: "rgba(255,120,80,"  },
+  viridis:  { glow: "rgba(40,170,60,",   core: "rgba(190,235,30,"  },
+  ember:    { glow: "rgba(190,80,0,",    core: "rgba(255,185,30,"  },
+  arctic:   { glow: "rgba(0,120,220,",   core: "rgba(80,210,255,"  },
+  crimson:  { glow: "rgba(190,0,10,",    core: "rgba(255,70,70,"   },
+  infrared: { glow: "rgba(50,180,20,",   core: "rgba(210,245,0,"   },
 };

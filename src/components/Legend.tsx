@@ -3,10 +3,14 @@
 import { ARTIFACT_TYPE_META, ARTIFACT_TYPES, ArtifactType, HeatmapSettings, Theme } from "@/lib/types";
 
 const GRADIENTS: Record<HeatmapSettings["colorScheme"], string> = {
-  fire:    "linear-gradient(to right, #640c00, #c82000, #e85000, #f0b000, #fff5a0)",
-  ocean:   "linear-gradient(to right, #001640, #0048b0, #009fcc, #00d8b0, #c0fff0)",
-  plasma:  "linear-gradient(to right, #6e0a0a, #c00040, #e82070, #f07020, #ffe030)",
-  viridis: "linear-gradient(to right, #0a3820, #146450, #1ea078, #60c830, #fde725)",
+  fire:     "linear-gradient(to right,#640c00,#c82000,#e85000,#f0b000,#fff5a0)",
+  ocean:    "linear-gradient(to right,#001640,#0048b0,#009fcc,#00d8b0,#c0fff0)",
+  plasma:   "linear-gradient(to right,#6e0a0a,#c00040,#e82070,#f07020,#ffe030)",
+  viridis:  "linear-gradient(to right,#0a3820,#146450,#1ea078,#60c830,#fde725)",
+  ember:    "linear-gradient(to right,#3c0a00,#8c2800,#d25800,#ffa000,#ffe580)",
+  arctic:   "linear-gradient(to right,#00142e,#004696,#008ce6,#28c8ff,#96ebff)",
+  crimson:  "linear-gradient(to right,#320000,#8c0000,#d20014,#ff3c3c,#ffa090)",
+  infrared: "linear-gradient(to right,#002800,#007828,#50c800,#d8f000,#ffc800)",
 };
 
 export default function Legend({ colorScheme, theme, activeTypes }: {
