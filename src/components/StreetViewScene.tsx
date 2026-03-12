@@ -36,6 +36,20 @@ interface Props {
  *  float too high.  Report back the value that looks best and we'll lock it. */
 const PIN_Y_LIFT = 60;
 
+/* ── Bearing from a panorama LatLng toward target coords ──────────── */
+function bearingToTarget(
+  from: google.maps.LatLng,
+  toLat: number,
+  toLng: number
+): number {
+  const dLng = ((toLng - from.lng()) * Math.PI) / 180;
+  const φ1   = (from.lat() * Math.PI) / 180;
+  const φ2   = (toLat      * Math.PI) / 180;
+  const y    = Math.sin(dLng) * Math.cos(φ2);
+  const x    = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(dLng);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
 /* ── Distance → scale ─────────────────────────────────────────────── */
 function haversineM(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6_371_000;
@@ -247,9 +261,18 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
             if (fallback) { tryRadius(fallback); return; }
             setState("no-coverage"); return;
           }
+          const panoPos = data!.location!.latLng!;
+
+          // Compute heading from the ACTUAL panorama node (which Google Maps
+          // snapped to) toward the original target coords. This is the only
+          // reliable way to guarantee the target pin is in front of the user —
+          // computing it in page.tsx from the old position is less accurate
+          // because the panorama node is rarely at the exact pin coordinates.
+          const targetHeading = bearingToTarget(panoPos, lat, lng);
+
           const pano = new StreetViewPanorama(containerRef.current!, {
-            position:              data!.location!.latLng!,
-            pov:                   { heading: heading ?? 0, pitch: 0 },
+            position: panoPos,
+            pov:      { heading: targetHeading, pitch: 0 },
             zoom:                  0,
             addressControl:        false,
             fullscreenControl:     false,
@@ -264,12 +287,9 @@ export default function StreetViewScene({ lat, lng, heading, theme, locations, s
           panoramaRef.current = pano;
           pano.addListener("status_changed", () => {
             if (cancelled) return;
-            // Re-apply heading here — Google Maps can reset the POV when the
-            // panorama finishes loading its new position, overriding the value
-            // we passed to the constructor.
-            if (heading !== undefined) {
-              pano.setPov({ heading, pitch: 0 });
-            }
+            // Google Maps resets POV after the panorama finishes loading its
+            // position. Re-apply our computed heading so it always wins.
+            pano.setPov({ heading: targetHeading, pitch: 0 });
             buildPins(pano, locations, isDark, showPins, onPinClick);
           });
           setState("ready");
