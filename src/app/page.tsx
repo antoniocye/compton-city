@@ -89,21 +89,30 @@ function resolveStreetView(summary: LocationSummary, heading?: number): StreetVi
 /* ── Component ────────────────────────────────────────────────────── */
 export default function Home() {
   // ── Persisted state ──────────────────────────────────────────────
-  const [settings, setSettings] = useState<HeatmapSettings>(
-    () => lsGet("compton-settings", DEFAULT_SETTINGS)
-  );
-  const [theme, setTheme] = useState<Theme>(
-    () => lsGet<Theme>("compton-theme", "dark")
-  );
-  // User preferences: autoplay artifact media + ambient background music
-  const [autoplay, setAutoplay]       = useState(() => lsGet("compton-autoplay", false));
-  const [ambientOn, setAmbientOn]     = useState(() => lsGet("compton-ambient", false));
+  // Always initialise with defaults so server and client render identical HTML
+  // (avoids hydration mismatch). We load localStorage values in a single
+  // useEffect after mount, guarded by persistReady so defaults never
+  // overwrite already-stored values.
+  const [settings, setSettings] = useState<HeatmapSettings>(DEFAULT_SETTINGS);
+  const [theme,    setTheme]    = useState<Theme>("dark");
+  const [autoplay, setAutoplay] = useState(false);
+  const [ambientOn, setAmbientOn] = useState(false);
+  const persistReady = useRef(false);
 
-  // Persist on change
-  useEffect(() => { lsSet("compton-settings", settings); }, [settings]);
-  useEffect(() => { lsSet("compton-theme", theme); }, [theme]);
-  useEffect(() => { lsSet("compton-autoplay", autoplay); }, [autoplay]);
-  useEffect(() => { lsSet("compton-ambient", ambientOn); }, [ambientOn]);
+  // Load from localStorage once after hydration
+  useEffect(() => {
+    setSettings(lsGet("compton-settings", DEFAULT_SETTINGS));
+    setTheme(lsGet<Theme>("compton-theme", "dark"));
+    setAutoplay(lsGet("compton-autoplay", false));
+    setAmbientOn(lsGet("compton-ambient", false));
+    persistReady.current = true;
+  }, []);
+
+  // Persist changes — skip until after load so defaults never clobber stored values
+  useEffect(() => { if (persistReady.current) lsSet("compton-settings", settings); }, [settings]);
+  useEffect(() => { if (persistReady.current) lsSet("compton-theme",    theme);    }, [theme]);
+  useEffect(() => { if (persistReady.current) lsSet("compton-autoplay", autoplay); }, [autoplay]);
+  useEffect(() => { if (persistReady.current) lsSet("compton-ambient",  ambientOn);}, [ambientOn]);
 
   // ── Ephemeral state ───────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen]       = useState(false);
