@@ -9,7 +9,7 @@ import {
   LocationSummary,
 } from "@/lib/types";
 import { COMPTON_BORDER_GEOJSON } from "@/lib/comptonBoundary";
-import { getLocationCenter, isStreetLocation, samplePointsAlongStreet } from "@/lib/artifacts";
+import { getLocationCenter, isStreetLocation } from "@/lib/artifacts";
 
 interface MiniMapProps {
   summaries: LocationSummary[];
@@ -31,6 +31,14 @@ function buildColorExpr(scheme: HeatmapSettings["colorScheme"]) {
   return expr as maplibregl.ExpressionSpecification;
 }
 
+function buildStreetLineColorExpr(scheme: HeatmapSettings["colorScheme"]) {
+  const stops = COLOR_SCHEMES[scheme];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const expr: any[] = ["interpolate", ["linear"], ["get", "weight"]];
+  for (const [s, c] of stops) expr.push(s, c);
+  return expr as maplibregl.ExpressionSpecification;
+}
+
 export default function MiniMap({
   summaries, settings, theme,
   focusLat, focusLng,
@@ -45,23 +53,28 @@ export default function MiniMap({
   const heatData = useMemo(() => {
     const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
     for (const summary of summaries) {
-      const weight = summary.normalizedWeight;
-      if (isStreetLocation(summary.location)) {
-        for (const [lng, lat] of samplePointsAlongStreet(summary.location)) {
-          features.push({
-            type: "Feature",
-            geometry: { type: "Point", coordinates: [lng, lat] },
-            properties: { weight },
-          });
-        }
-      } else {
-        const { lat, lng } = getLocationCenter(summary.location);
-        features.push({
-          type: "Feature",
-          geometry: { type: "Point", coordinates: [lng, lat] },
-          properties: { weight },
-        });
-      }
+      if (isStreetLocation(summary.location)) continue;
+      const { lat, lng } = getLocationCenter(summary.location);
+      features.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [lng, lat] },
+        properties: { weight: summary.normalizedWeight },
+      });
+    }
+    return { type: "FeatureCollection" as const, features };
+  }, [summaries]);
+
+  const streetsData = useMemo(() => {
+    const features: GeoJSON.Feature<GeoJSON.LineString>[] = [];
+    for (const summary of summaries) {
+      if (!isStreetLocation(summary.location)) continue;
+      const coords = summary.location.coordinates;
+      if (coords.length < 2) continue;
+      features.push({
+        type: "Feature",
+        geometry: { type: "LineString", coordinates: coords },
+        properties: { weight: summary.normalizedWeight },
+      });
     }
     return { type: "FeatureCollection" as const, features };
   }, [summaries]);
@@ -105,17 +118,22 @@ export default function MiniMap({
         "line-width": 1.2, "line-dasharray": [4, 3],
       }});
 
-      // Heatmap
-      map.addSource("heat-src", {
-        type: "geojson",
-        data: heatData,
-      });
+      // Heatmap (points only)
+      map.addSource("heat-src", { type: "geojson", data: heatData });
       map.addLayer({ id: "heat-layer", type: "heatmap", source: "heat-src", paint: {
         "heatmap-weight":    ["interpolate", ["linear"], ["get", "weight"], 0, 0, 1, 1],
         "heatmap-intensity": settings.intensity * 0.8,
         "heatmap-color":     buildColorExpr(settings.colorScheme),
         "heatmap-radius":    settings.radius * 0.5,
         "heatmap-opacity":   settings.opacity * 0.9,
+      }});
+
+      // Street lines (thin)
+      map.addSource("streets-src", { type: "geojson", data: streetsData });
+      map.addLayer({ id: "streets-layer", type: "line", source: "streets-src", paint: {
+        "line-color":   buildStreetLineColorExpr(settings.colorScheme),
+        "line-width":   2,
+        "line-opacity": settings.opacity * 0.8,
       }});
 
       // Focus marker
@@ -194,8 +212,9 @@ export default function MiniMap({
     if (!map) return;
     try {
       (map.getSource("heat-src") as maplibregl.GeoJSONSource | undefined)?.setData(heatData);
+      (map.getSource("streets-src") as maplibregl.GeoJSONSource | undefined)?.setData(streetsData);
     } catch { /* map may have been removed */ }
-  }, [heatData]);
+  }, [heatData, streetsData]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -205,6 +224,8 @@ export default function MiniMap({
       map.setPaintProperty("heat-layer", "heatmap-color", buildColorExpr(settings.colorScheme));
       map.setPaintProperty("heat-layer", "heatmap-radius", settings.radius * 0.5);
       map.setPaintProperty("heat-layer", "heatmap-opacity", settings.opacity * 0.9);
+      map.setPaintProperty("streets-layer", "line-color", buildStreetLineColorExpr(settings.colorScheme));
+      map.setPaintProperty("streets-layer", "line-opacity", settings.opacity * 0.8);
     } catch { /* map may have been removed */ }
   }, [settings]);
 

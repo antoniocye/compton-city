@@ -25,27 +25,6 @@ export function getLocationCenter(loc: LocationNode): { lat: number; lng: number
   return { lat: loc.lat, lng: loc.lng };
 }
 
-/** Samples points along a street for heatmap rendering. Returns [lng, lat] pairs. */
-export function samplePointsAlongStreet(
-  loc: StreetLocation,
-  count: number = 24
-): [number, number][] {
-  const coords = loc.coordinates;
-  if (coords.length < 2) return coords.length ? [coords[0]] : [];
-  const result: [number, number][] = [];
-  const step = (coords.length - 1) / Math.max(1, count - 1);
-  for (let i = 0; i < count; i++) {
-    const idx = Math.min(i * step, coords.length - 1);
-    const lo = Math.floor(idx);
-    const hi = Math.min(lo + 1, coords.length - 1);
-    const t = idx - lo;
-    const lng = coords[lo][0] + t * (coords[hi][0] - coords[lo][0]);
-    const lat = coords[lo][1] + t * (coords[hi][1] - coords[lo][1]);
-    result.push([lng, lat]);
-  }
-  return result;
-}
-
 export function buildLocationSummaries(
   locations: LocationNode[],
   artifacts: CulturalArtifact[]
