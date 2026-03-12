@@ -192,9 +192,9 @@ export default function HeatmapMap({
           buildHeatmapColorExpr(s.colorScheme));
         map.setPaintProperty("heatmap-layer", "heatmap-opacity",   s.opacity);
         map.setPaintProperty("heatmap-layer", "heatmap-radius",
-          ["interpolate", ["linear"], ["zoom"], 0, 2, 13, s.radius * 0.6, 16, s.radius * 1.4]);
+          ["interpolate", ["linear"], ["zoom"], 9, s.radius * 2.2, 13, s.radius * 0.8, 17, s.radius * 1.6]);
         map.setPaintProperty("heatmap-layer", "heatmap-intensity",
-          ["interpolate", ["linear"], ["zoom"], 0, 0.5, 13, s.intensity, 16, s.intensity * 1.5]);
+          ["interpolate", ["linear"], ["zoom"], 9, s.intensity * 2.0, 13, s.intensity * 1.0, 17, s.intensity * 1.8]);
       }
       // Update street color + opacity when scheme or opacity changes
       if (map.getLayer("streets-glow")) {
@@ -291,10 +291,10 @@ export default function HeatmapMap({
         paint: {
           "heatmap-weight":    ["interpolate", ["linear"], ["get", "weight"], 0, 0, 1, 1],
           "heatmap-intensity": ["interpolate", ["linear"], ["zoom"],
-            0, 0.5, 13, s.intensity, 16, s.intensity * 1.5],
+            9, s.intensity * 2.0, 13, s.intensity * 1.0, 17, s.intensity * 1.8],
           "heatmap-color":     buildHeatmapColorExpr(s.colorScheme),
           "heatmap-radius":    ["interpolate", ["linear"], ["zoom"],
-            0, 2, 13, s.radius * 0.6, 16, s.radius * 1.4],
+            9, s.radius * 2.2, 13, s.radius * 0.8, 17, s.radius * 1.6],
           "heatmap-opacity":   s.opacity,
         },
       });

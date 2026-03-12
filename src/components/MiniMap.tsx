@@ -137,9 +137,9 @@ export default function MiniMap({
       map.addSource("heat-src", { type: "geojson", data: heatData });
       map.addLayer({ id: "heat-layer", type: "heatmap", source: "heat-src", paint: {
         "heatmap-weight":    ["interpolate", ["linear"], ["get", "weight"], 0, 0, 1, 1],
-        "heatmap-intensity": settings.intensity * 0.8,
+        "heatmap-intensity": settings.intensity * 1.6,
         "heatmap-color":     buildColorExpr(settings.colorScheme),
-        "heatmap-radius":    settings.radius * 0.5,
+        "heatmap-radius":    settings.radius * 1.2,
         "heatmap-opacity":   settings.opacity * 0.9,
       }});
 
@@ -236,9 +236,9 @@ export default function MiniMap({
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
     try {
-      map.setPaintProperty("heat-layer", "heatmap-intensity", settings.intensity * 0.8);
+      map.setPaintProperty("heat-layer", "heatmap-intensity", settings.intensity * 1.6);
       map.setPaintProperty("heat-layer", "heatmap-color",     buildColorExpr(settings.colorScheme));
-      map.setPaintProperty("heat-layer", "heatmap-radius",    settings.radius * 0.5);
+      map.setPaintProperty("heat-layer", "heatmap-radius",    settings.radius * 1.2);
       map.setPaintProperty("heat-layer", "heatmap-opacity",   settings.opacity * 0.9);
       map.setPaintProperty("streets-glow", "line-color",   buildStreetGlowColor(settings.colorScheme));
       map.setPaintProperty("streets-glow", "line-opacity", settings.opacity * 0.35);

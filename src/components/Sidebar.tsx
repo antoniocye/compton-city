@@ -84,12 +84,12 @@ export default function Sidebar({
   const div = isDark ? "border-zinc-800" : "border-zinc-100";
 
   return (
-    /* Starts below the header (~60px), no top-0 padding trick */
+    /* Starts 12 px below the header bottom edge (~72 px) so it never touches the brand chip */
     <aside className={`absolute left-0 z-10 transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-x-0" : "-translate-x-full"
-    }`} style={{ top: 60, bottom: 16 }}>
-      <div className="h-full pl-3" style={{ width: 248 }}>
-        <div className={`h-full flex flex-col border rounded-xl overflow-hidden shadow-2xl ${
+    }`} style={{ top: 72, bottom: 20 }}>
+      <div className="h-full pl-3" style={{ width: 280 }}>
+        <div className={`h-full w-full flex flex-col border rounded-xl overflow-hidden shadow-2xl ${
           isDark ? "bg-zinc-900 border-zinc-700" : "bg-white border-zinc-200"
         }`}>
 
