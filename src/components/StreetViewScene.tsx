@@ -87,8 +87,7 @@ function makePinEl(label: string, isDark: boolean): HTMLDivElement {
     transition: transform 0.2s ease, opacity 0.2s ease;
   `;
   el.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;
-                animation:svFloat 2.8s ease-in-out infinite;">
+    <div style="display:flex;flex-direction:column;align-items:center;">
       <div style="
         background:${chipBg};color:${chipTx};
         border:1px solid ${chipBr};
