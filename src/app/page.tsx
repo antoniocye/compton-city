@@ -10,6 +10,7 @@ import {
   Theme,
   StreetViewLocation,
 } from "@/lib/types";
+import { DEFAULT_HEATMAP_SETTINGS } from "@/lib/heatmapStyle";
 import { buildLocationSummaries, filterArtifactsByTypes, getLocationCenter } from "@/lib/artifacts";
 import { SAMPLE_ARTIFACTS, SAMPLE_LOCATIONS } from "@/lib/sampleData";
 import Header from "@/components/Header";
@@ -44,10 +45,6 @@ function lsGet<T>(key: string, fallback: T): T {
 function lsSet<T>(key: string, value: T) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
 }
-
-const DEFAULT_SETTINGS: HeatmapSettings = {
-  radius: 30, intensity: 1.5, opacity: 0.85, colorScheme: "fire",
-};
 
 /* ── Geometry helpers ─────────────────────────────────────────────── */
 function distanceM(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -92,14 +89,14 @@ export default function Home() {
   // (avoids hydration mismatch). We load localStorage values in a single
   // useEffect after mount, guarded by persistReady so defaults never
   // overwrite already-stored values.
-  const [settings, setSettings] = useState<HeatmapSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<HeatmapSettings>(DEFAULT_HEATMAP_SETTINGS);
   const [theme,    setTheme]    = useState<Theme>("dark");
   const [autoplay, setAutoplay] = useState(true);
   const persistReady = useRef(false);
 
   // Load from localStorage once after hydration
   useEffect(() => {
-    setSettings(lsGet("compton-settings", DEFAULT_SETTINGS));
+    setSettings(lsGet("compton-settings", DEFAULT_HEATMAP_SETTINGS));
     setTheme(lsGet<Theme>("compton-theme", "dark"));
     setAutoplay(lsGet("compton-autoplay", true));
     persistReady.current = true;

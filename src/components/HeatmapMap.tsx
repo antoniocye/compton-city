@@ -17,6 +17,10 @@ import {
   COMPTON_BOUNDS,
 } from "@/lib/comptonBoundary";
 import { enrichStreetsWithRoadGeometry } from "@/lib/streetGeometry";
+import {
+  buildMainHeatPaintExpressions,
+  buildStreetLayerStyle,
+} from "@/lib/heatmapStyle";
 
 interface HeatmapMapProps {
   summaries: LocationSummary[];
@@ -187,31 +191,33 @@ export default function HeatmapMap({
   themeRef.current     = theme;
 
   const applyHeatmapPaint = useCallback((map: maplibregl.Map, s: HeatmapSettings) => {
+    const heatPaint = buildMainHeatPaintExpressions(s);
+    const streetStyle = buildStreetLayerStyle(s);
     try {
       if (map.getLayer("heatmap-layer")) {
         map.setPaintProperty("heatmap-layer", "heatmap-color",
           buildHeatmapColorExpr(s.colorScheme));
-        map.setPaintProperty("heatmap-layer", "heatmap-opacity",   s.opacity);
-        map.setPaintProperty("heatmap-layer", "heatmap-radius",
-          ["interpolate", ["linear"], ["zoom"], 9, s.radius * 2.2, 13, s.radius * 0.8, 17, s.radius * 1.6]);
-        map.setPaintProperty("heatmap-layer", "heatmap-intensity",
-          ["interpolate", ["linear"], ["zoom"], 9, s.intensity * 2.0, 13, s.intensity * 1.0, 17, s.intensity * 1.8]);
+        map.setPaintProperty("heatmap-layer", "heatmap-opacity", heatPaint.opacity);
+        map.setPaintProperty("heatmap-layer", "heatmap-radius", heatPaint.radius);
+        map.setPaintProperty("heatmap-layer", "heatmap-intensity", heatPaint.intensity);
       }
-      // Update street color + opacity when scheme or opacity changes
+      // Keep street stack consistent with shared style curve set.
       if (map.getLayer("streets-glow")) {
         map.setPaintProperty("streets-glow", "line-color", buildStreetGlowColorExpr(s.colorScheme));
-        map.setPaintProperty("streets-glow", "line-opacity",
-          ["interpolate", ["linear"], ["get", "weight"], 0, s.opacity * 0.12, 1, s.opacity * 0.30]);
+        map.setPaintProperty("streets-glow", "line-width", streetStyle.glow.width);
+        map.setPaintProperty("streets-glow", "line-blur", streetStyle.glow.blur);
+        map.setPaintProperty("streets-glow", "line-opacity", streetStyle.glow.opacity);
       }
       if (map.getLayer("streets-body")) {
         map.setPaintProperty("streets-body", "line-color", buildStreetGlowColorExpr(s.colorScheme));
-        map.setPaintProperty("streets-body", "line-opacity",
-          ["interpolate", ["linear"], ["get", "weight"], 0, s.opacity * 0.28, 1, s.opacity * 0.58]);
+        map.setPaintProperty("streets-body", "line-width", streetStyle.body.width);
+        map.setPaintProperty("streets-body", "line-blur", streetStyle.body.blur);
+        map.setPaintProperty("streets-body", "line-opacity", streetStyle.body.opacity);
       }
       if (map.getLayer("streets-core")) {
         map.setPaintProperty("streets-core", "line-color", buildStreetCoreColorExpr(s.colorScheme));
-        map.setPaintProperty("streets-core", "line-opacity",
-          ["interpolate", ["linear"], ["get", "weight"], 0, s.opacity * 0.65, 1, s.opacity * 0.95]);
+        map.setPaintProperty("streets-core", "line-width", streetStyle.core.width);
+        map.setPaintProperty("streets-core", "line-opacity", streetStyle.core.opacity);
       }
     } catch { /* map may have been removed */ }
   }, []);
@@ -264,6 +270,8 @@ export default function HeatmapMap({
       loadedRef.current = true;
       const s            = settingsRef.current;
       const currentTheme = themeRef.current;
+      const heatPaint = buildMainHeatPaintExpressions(s);
+      const streetStyle = buildStreetLayerStyle(s);
 
       /* Compton mask */
       map.addSource("compton-mask-src",   { type: "geojson", data: COMPTON_MASK_GEOJSON });
@@ -291,12 +299,10 @@ export default function HeatmapMap({
         id: "heatmap-layer", type: "heatmap", source: "heatmap-src",
         paint: {
           "heatmap-weight":    ["interpolate", ["linear"], ["get", "weight"], 0, 0, 1, 1],
-          "heatmap-intensity": ["interpolate", ["linear"], ["zoom"],
-            9, s.intensity * 2.0, 13, s.intensity * 1.0, 17, s.intensity * 1.8],
+          "heatmap-intensity": heatPaint.intensity,
           "heatmap-color":     buildHeatmapColorExpr(s.colorScheme),
-          "heatmap-radius":    ["interpolate", ["linear"], ["zoom"],
-            9, s.radius * 2.2, 13, s.radius * 0.8, 17, s.radius * 1.6],
-          "heatmap-opacity":   s.opacity,
+          "heatmap-radius":    heatPaint.radius,
+          "heatmap-opacity":   heatPaint.opacity,
         },
       });
 
@@ -310,12 +316,9 @@ export default function HeatmapMap({
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
           "line-color":   buildStreetGlowColorExpr(s.colorScheme),
-          "line-width":   ["interpolate", ["linear"], ["zoom"],
-            10, 10, 13, 18, 16, 26],
-          "line-blur":    10,
-          "line-opacity": ["interpolate", ["linear"], ["get", "weight"],
-            0, s.opacity * 0.12,
-            1, s.opacity * 0.30],
+          "line-width":   streetStyle.glow.width,
+          "line-blur":    streetStyle.glow.blur,
+          "line-opacity": streetStyle.glow.opacity,
         },
       });
 
@@ -325,12 +328,9 @@ export default function HeatmapMap({
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
           "line-color":   buildStreetGlowColorExpr(s.colorScheme),
-          "line-width":   ["interpolate", ["linear"], ["zoom"],
-            10, 5, 13, 9, 16, 14],
-          "line-blur":    2.5,
-          "line-opacity": ["interpolate", ["linear"], ["get", "weight"],
-            0, s.opacity * 0.28,
-            1, s.opacity * 0.58],
+          "line-width":   streetStyle.body.width,
+          "line-blur":    streetStyle.body.blur,
+          "line-opacity": streetStyle.body.opacity,
         },
       });
 
@@ -340,11 +340,8 @@ export default function HeatmapMap({
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
           "line-color":   buildStreetCoreColorExpr(s.colorScheme),
-          "line-width":   ["interpolate", ["linear"], ["zoom"],
-            10, 2, 13, 3.5, 16, 5.5],
-          "line-opacity": ["interpolate", ["linear"], ["get", "weight"],
-            0, s.opacity * 0.65,
-            1, s.opacity * 0.95],
+          "line-width":   streetStyle.core.width,
+          "line-opacity": streetStyle.core.opacity,
         },
       });
 
@@ -356,11 +353,11 @@ export default function HeatmapMap({
       map.addLayer({
         id: "dot-layer", type: "circle", source: "dots-src", minzoom: 14,
         paint: {
-          "circle-radius":       ["interpolate", ["linear"], ["zoom"], 14, 3, 18, 8],
-          "circle-color":        "#ffffff",
-          "circle-opacity":      ["interpolate", ["linear"], ["zoom"], 14, 0, 15, 0.90],
+          "circle-radius":       ["interpolate", ["linear"], ["zoom"], 14, 2.5, 18, 6],
+          "circle-color":        "rgba(255,255,255,0.9)",
+          "circle-opacity":      ["interpolate", ["linear"], ["zoom"], 14, 0.15, 15, 0.65, 18, 0.78],
           "circle-stroke-color": ["coalesce", ["get", "dominantColor"], "#f59e0b"],
-          "circle-stroke-width": 1.5,
+          "circle-stroke-width": 1.2,
         },
       });
 

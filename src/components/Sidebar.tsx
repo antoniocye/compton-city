@@ -7,6 +7,7 @@ import {
   HeatmapSettings,
   Theme,
 } from "@/lib/types";
+import { DEFAULT_HEATMAP_SETTINGS } from "@/lib/heatmapStyle";
 
 interface SidebarProps {
   settings: HeatmapSettings;
@@ -161,7 +162,7 @@ export default function Sidebar({
               onChange={(v) => onUpdateSettings({ ...settings, opacity: v })} />
 
             <button
-              onClick={() => onUpdateSettings({ radius: 30, intensity: 1.5, opacity: 0.85, colorScheme: "fire" })}
+              onClick={() => onUpdateSettings(DEFAULT_HEATMAP_SETTINGS)}
               className={`w-full py-1.5 rounded-lg text-[11px] border transition-all ${
                 isDark
                   ? "border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300"

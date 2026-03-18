@@ -38,8 +38,11 @@ src/
 │   └── MiniMap.tsx       # Small MapLibre map shown in corner during Street View
 └── lib/
     ├── types.ts           # Shared types + COLOR_SCHEMES data
-    ├── sampleData.ts      # 33 pre-loaded Compton locations (approximate real coords)
-    └── comptonBoundary.ts # Compton city boundary GeoJSON + bounding box
+    ├── sampleData.ts      # Cultural artifact dataset loader
+    └── comptonBoundary.ts # Boundary exports derived from LA County snapshot
+scripts/
+├── updateComptonBoundarySnapshot.mjs # Fetch + normalize Compton boundary snapshot
+└── verifyComptonBoundarySnapshot.mjs # Guardrails for boundary validity/richness
 ```
 
 ---
@@ -136,18 +139,22 @@ Theme toggle calls `map.setLayoutProperty("layer-dark", "visibility", ...)` and
 `map.setLayoutProperty("layer-light", "visibility", ...)` — instant, no style
 reload, no flicker.
 
-### Compton mask
+### Compton boundary + mask
 
-A GeoJSON `Polygon` whose exterior ring is a world-covering rectangle (CCW)
-and whose interior ring (hole) is the Compton boundary (CW). A `fill` layer
-renders this as a semi-transparent overlay everywhere outside Compton.
-The colour/opacity is updated via `setPaintProperty` when theme changes.
+Boundary geometry is sourced from **Los Angeles County DPW CityBoundaries**
+(`MapServer/1`, `CITY_NAME='Compton'`, `FEAT_TYPE='Land'`) and committed as
+`src/data/comptonBoundary.snapshot.json`.
 
-GeoJSON winding rules used:
-- **Exterior ring (world box):** counter-clockwise → treated as filled area
-- **Interior ring (Compton boundary):** clockwise → treated as a hole (punched out)
+`src/lib/comptonBoundary.ts` builds:
+- `COMPTON_CITY_GEOJSON` (`Polygon`/`MultiPolygon`) from the snapshot
+- `COMPTON_BORDER_GEOJSON` (`FeatureCollection<LineString>`) for every ring
+- `COMPTON_MASK_GEOJSON` (`MultiPolygon`) with:
+  - polygon 1: world exterior + Compton outer shells as holes
+  - polygons 2..N: Compton interior holes converted to filled polygons
+- `COMPTON_BOUNDS` computed from outer shells (not hard-coded)
 
-This is defined in `src/lib/comptonBoundary.ts`.
+This keeps enclave/inner-hole behavior accurate while preserving high-fidelity
+border detail.
 
 ### Heatmap colour expressions
 
@@ -365,22 +372,31 @@ gracefully to a "key needed" screen with setup instructions.
 ```bash
 npm install
 npm run dev        # http://localhost:3000
-npm run build      # production build + type check
+npm run build      # boundary verification + production build + type check
+```
+
+---
+
+## Updating boundary snapshot
+
+```bash
+npm run boundary:refresh   # fetch + normalize + verify
+# or separately:
+npm run boundary:update
+npm run boundary:verify
 ```
 
 ---
 
 ## Adding new location data
 
-Edit `src/lib/sampleData.ts`. Each entry:
+Edit `src/data/culturalArtifacts.json`.
 
-```typescript
-{ id: "s1", lat: 33.8958, lng: -118.2201, label: "City Hall", weight: 1 }
-```
+Locations support points and street geometries; artifacts reference `locationId`.
 
 - `id` must be unique (prefix `s` for sample, `u` for user-added at runtime)
-- `weight` 0–1 controls heatmap intensity contribution
-- Coordinates are approximate real-world positions (~100m accuracy)
+- `heatWeight` on artifacts controls contribution to heat intensity
+- Coordinates should be real-world lon/lat values (WGS84)
 - The app also accepts coordinates at runtime via the sidebar (single or bulk paste)
 
 ---

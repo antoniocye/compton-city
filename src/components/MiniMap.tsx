@@ -10,6 +10,10 @@ import {
 } from "@/lib/types";
 import { COMPTON_BORDER_GEOJSON } from "@/lib/comptonBoundary";
 import { getLocationCenter, isStreetLocation } from "@/lib/artifacts";
+import {
+  buildMiniHeatPaintExpressions,
+  buildStreetLayerStyle,
+} from "@/lib/heatmapStyle";
 
 interface MiniMapProps {
   summaries: LocationSummary[];
@@ -121,6 +125,8 @@ export default function MiniMap({
     map.on("load", () => {
       if (destroyed) return;   // component unmounted before tiles loaded
       loadedRef.current = true;
+      const heatPaint = buildMiniHeatPaintExpressions(settings);
+      const streetStyle = buildStreetLayerStyle(settings);
 
       // Border
       map.addSource("border-src", { type: "geojson", data: COMPTON_BORDER_GEOJSON });
@@ -137,28 +143,38 @@ export default function MiniMap({
       map.addSource("heat-src", { type: "geojson", data: heatData });
       map.addLayer({ id: "heat-layer", type: "heatmap", source: "heat-src", paint: {
         "heatmap-weight":    ["interpolate", ["linear"], ["get", "weight"], 0, 0, 1, 1],
-        "heatmap-intensity": settings.intensity * 1.6,
+        "heatmap-intensity": heatPaint.intensity,
         "heatmap-color":     buildColorExpr(settings.colorScheme),
-        "heatmap-radius":    settings.radius * 1.2,
-        "heatmap-opacity":   settings.opacity * 0.9,
+        "heatmap-radius":    heatPaint.radius,
+        "heatmap-opacity":   heatPaint.opacity,
       }});
 
-      // Streets — glow + core
+      // Streets — shared crisp stack
       map.addSource("streets-src", { type: "geojson", data: streetsData });
       map.addLayer({ id: "streets-glow", type: "line", source: "streets-src",
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
           "line-color":   buildStreetGlowColor(settings.colorScheme),
-          "line-width":   8, "line-blur": 6,
-          "line-opacity": settings.opacity * 0.35,
+          "line-width":   streetStyle.glow.width,
+          "line-blur":    streetStyle.glow.blur,
+          "line-opacity": streetStyle.glow.opacity,
+        },
+      });
+      map.addLayer({ id: "streets-body", type: "line", source: "streets-src",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color":   buildStreetGlowColor(settings.colorScheme),
+          "line-width":   streetStyle.body.width,
+          "line-blur":    streetStyle.body.blur,
+          "line-opacity": streetStyle.body.opacity,
         },
       });
       map.addLayer({ id: "streets-core", type: "line", source: "streets-src",
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
           "line-color":   buildStreetCoreColor(settings.colorScheme),
-          "line-width":   2.5,
-          "line-opacity": settings.opacity * 0.85,
+          "line-width":   streetStyle.core.width,
+          "line-opacity": streetStyle.core.opacity,
         },
       });
 
@@ -235,15 +251,24 @@ export default function MiniMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loadedRef.current) return;
+    const heatPaint = buildMiniHeatPaintExpressions(settings);
+    const streetStyle = buildStreetLayerStyle(settings);
     try {
-      map.setPaintProperty("heat-layer", "heatmap-intensity", settings.intensity * 1.6);
+      map.setPaintProperty("heat-layer", "heatmap-intensity", heatPaint.intensity);
       map.setPaintProperty("heat-layer", "heatmap-color",     buildColorExpr(settings.colorScheme));
-      map.setPaintProperty("heat-layer", "heatmap-radius",    settings.radius * 1.2);
-      map.setPaintProperty("heat-layer", "heatmap-opacity",   settings.opacity * 0.9);
-      map.setPaintProperty("streets-glow", "line-color",   buildStreetGlowColor(settings.colorScheme));
-      map.setPaintProperty("streets-glow", "line-opacity", settings.opacity * 0.35);
-      map.setPaintProperty("streets-core", "line-color",   buildStreetCoreColor(settings.colorScheme));
-      map.setPaintProperty("streets-core", "line-opacity", settings.opacity * 0.85);
+      map.setPaintProperty("heat-layer", "heatmap-radius",    heatPaint.radius);
+      map.setPaintProperty("heat-layer", "heatmap-opacity",   heatPaint.opacity);
+      map.setPaintProperty("streets-glow", "line-color",      buildStreetGlowColor(settings.colorScheme));
+      map.setPaintProperty("streets-glow", "line-width",      streetStyle.glow.width);
+      map.setPaintProperty("streets-glow", "line-blur",       streetStyle.glow.blur);
+      map.setPaintProperty("streets-glow", "line-opacity",    streetStyle.glow.opacity);
+      map.setPaintProperty("streets-body", "line-color",      buildStreetGlowColor(settings.colorScheme));
+      map.setPaintProperty("streets-body", "line-width",      streetStyle.body.width);
+      map.setPaintProperty("streets-body", "line-blur",       streetStyle.body.blur);
+      map.setPaintProperty("streets-body", "line-opacity",    streetStyle.body.opacity);
+      map.setPaintProperty("streets-core", "line-color",      buildStreetCoreColor(settings.colorScheme));
+      map.setPaintProperty("streets-core", "line-width",      streetStyle.core.width);
+      map.setPaintProperty("streets-core", "line-opacity",    streetStyle.core.opacity);
     } catch { /* ignore */ }
   }, [settings]);
 

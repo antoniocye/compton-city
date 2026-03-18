@@ -3197,7 +3197,7 @@
         "tams",
         "rosecrans"
       ],
-      "heatWeight": 1.0,
+      "heatWeight": 1,
       "resource": {
         "kind": "spotify",
         "url": "https://open.spotify.com/track/1EaKU4dMbesXXd3BrLCtYG"
@@ -3599,7 +3599,7 @@
         "kendrick",
         "dre"
       ],
-      "heatWeight": 1.0,
+      "heatWeight": 1,
       "resource": {
         "kind": "spotify",
         "url": "https://open.spotify.com/track/1wf4LnpdAhLaoI2WwYDKAE"
@@ -3725,7 +3725,7 @@
         "kendrick",
         "section80"
       ],
-      "heatWeight": 1.0,
+      "heatWeight": 1,
       "resource": {
         "kind": "spotify",
         "url": "https://open.spotify.com/track/7AaET28qSzlkFBcySHh4ES"
@@ -3767,7 +3767,7 @@
         "cmw",
         "mc-eiht"
       ],
-      "heatWeight": 1.0,
+      "heatWeight": 1,
       "resource": {
         "kind": "spotify",
         "url": "https://open.spotify.com/track/79hH8RuVS9af6ixS97wREx"
@@ -4087,6 +4087,216 @@
       "resource": {
         "kind": "web",
         "url": "https://www.gq.com/story/kendrick-lamar-men-of-the-year-rapper"
+      }
+    },
+    {
+      "id": "art-lyric-maad-city-rosecrans",
+      "type": "lyric-snippet",
+      "locationId": "loc-rosecrans-ave",
+      "title": "Rosecrans Avenue drive",
+      "creator": "Kendrick Lamar",
+      "sourceTitle": "m.A.A.d city",
+      "year": 2012,
+      "date": "2012-10-22",
+      "caption": "Narrative references driving down Rosecrans Avenue in Compton.",
+      "tags": [
+        "kendrick",
+        "rosecrans",
+        "good-kid-maad-city"
+      ],
+      "heatWeight": 0.95,
+      "resource": {
+        "kind": "web",
+        "url": "https://en.wikipedia.org/wiki/M.A.A.D_City",
+        "label": "Wikipedia"
+      }
+    },
+    {
+      "id": "art-lyric-big-egos-compton-airport",
+      "type": "lyric-snippet",
+      "locationId": "loc-compton-woodley-airport",
+      "title": "Compton Airport in opening bars",
+      "creator": "Dr. Dre",
+      "sourceTitle": "Big Ego's",
+      "year": 1999,
+      "caption": "Referenced in the song's opening lines, as noted in Compton/Woodley Airport's pop-culture section.",
+      "tags": [
+        "dr-dre",
+        "compton-airport",
+        "2001"
+      ],
+      "heatWeight": 0.9,
+      "resource": {
+        "kind": "web",
+        "url": "https://en.wikipedia.org/wiki/Compton/Woodley_Airport",
+        "label": "Wikipedia"
+      }
+    },
+    {
+      "id": "art-image-compton-airport-runway",
+      "type": "image",
+      "locationId": "loc-compton-woodley-airport",
+      "title": "Compton/Woodley Airport runway photo",
+      "creator": "Wikimedia Commons",
+      "sourceTitle": "Compton/Woodley Airport",
+      "caption": "General aviation field in West Compton.",
+      "tags": [
+        "airport",
+        "compton",
+        "image"
+      ],
+      "heatWeight": 0.7,
+      "resource": {
+        "kind": "image",
+        "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/COMPTON_AIRPORT_2.jpg/330px-COMPTON_AIRPORT_2.jpg",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Compton/Woodley_Airport",
+        "credit": "Wikimedia Commons"
+      }
+    },
+    {
+      "id": "art-lyric-compton-song-ode",
+      "type": "lyric-snippet",
+      "locationId": "loc-compton-blvd",
+      "title": "Ode to hometown Compton",
+      "creator": "Kendrick Lamar, Dr. Dre",
+      "sourceTitle": "Compton",
+      "year": 2012,
+      "date": "2012-10-01",
+      "caption": "Closing track described as a celebratory tribute to Lamar's hometown.",
+      "tags": [
+        "kendrick",
+        "dr-dre",
+        "compton"
+      ],
+      "heatWeight": 0.82,
+      "resource": {
+        "kind": "web",
+        "url": "https://en.wikipedia.org/wiki/Compton_(song)",
+        "label": "Wikipedia"
+      }
+    },
+    {
+      "id": "art-lyric-nwa-straight-outta-compton",
+      "type": "lyric-snippet",
+      "locationId": "loc-compton-blvd",
+      "title": "Street-life portrait of Compton",
+      "creator": "N.W.A",
+      "sourceTitle": "Straight Outta Compton",
+      "year": 1989,
+      "date": "1989-01-25",
+      "caption": "Album lyrics depict life in Compton and helped define West Coast gangsta rap.",
+      "tags": [
+        "nwa",
+        "straight-outta-compton",
+        "west-coast"
+      ],
+      "heatWeight": 1,
+      "resource": {
+        "kind": "web",
+        "url": "https://en.wikipedia.org/wiki/Straight_Outta_Compton",
+        "label": "Wikipedia"
+      }
+    },
+    {
+      "id": "art-film-king-kunta-swap-meet-homage",
+      "type": "film-snippet",
+      "locationId": "loc-compton-fashion-center",
+      "title": "Swap Meet homage to California Love",
+      "creator": "Kendrick Lamar, Director X",
+      "sourceTitle": "King Kunta (music video)",
+      "year": 2015,
+      "caption": "Coverage notes Lamar performing on top of the Compton Swap Meet as a nod to 2Pac and Dr. Dre.",
+      "tags": [
+        "king-kunta",
+        "swap-meet",
+        "california-love"
+      ],
+      "heatWeight": 0.84,
+      "resource": {
+        "kind": "web",
+        "url": "https://en.wikipedia.org/wiki/King_Kunta",
+        "label": "Wikipedia"
+      }
+    },
+    {
+      "id": "art-film-centennial-rap-alumni",
+      "type": "film-snippet",
+      "locationId": "loc-centennial-high",
+      "title": "Centennial alumni in rap lineage",
+      "creator": "Wikipedia",
+      "sourceTitle": "Centennial High School (Compton, California)",
+      "caption": "Notable alumni listing includes Kendrick Lamar and Dr. Dre.",
+      "tags": [
+        "centennial-high",
+        "kendrick",
+        "dr-dre"
+      ],
+      "heatWeight": 0.66,
+      "resource": {
+        "kind": "web",
+        "url": "https://en.wikipedia.org/wiki/Centennial_High_School_(Compton,_California)",
+        "label": "Wikipedia"
+      }
+    },
+    {
+      "id": "art-image-centennial-logo",
+      "type": "image",
+      "locationId": "loc-centennial-high",
+      "title": "Centennial High School emblem",
+      "creator": "Wikimedia Commons",
+      "sourceTitle": "Centennial High School (Compton, California)",
+      "caption": "School emblem associated with one of Compton's major public high schools.",
+      "tags": [
+        "centennial-high",
+        "image",
+        "school"
+      ],
+      "heatWeight": 0.45,
+      "resource": {
+        "kind": "image",
+        "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Centennial_High_School_Compton_Logo.jpg/120px-Centennial_High_School_Compton_Logo.jpg",
+        "sourceUrl": "https://en.wikipedia.org/wiki/Centennial_High_School_(Compton,_California)",
+        "credit": "Wikimedia Commons"
+      }
+    },
+    {
+      "id": "art-film-compton-college-rap-alumni",
+      "type": "film-snippet",
+      "locationId": "loc-compton-college",
+      "title": "Compton College notable rap alumni",
+      "creator": "Wikipedia",
+      "sourceTitle": "Compton College",
+      "caption": "Notable alumni listing includes Snoop Dogg and Coolio.",
+      "tags": [
+        "compton-college",
+        "snoop-dogg",
+        "coolio"
+      ],
+      "heatWeight": 0.62,
+      "resource": {
+        "kind": "web",
+        "url": "https://en.wikipedia.org/wiki/Compton_College",
+        "label": "Wikipedia"
+      }
+    },
+    {
+      "id": "art-film-compton-airport-pop-culture",
+      "type": "film-snippet",
+      "locationId": "loc-compton-woodley-airport",
+      "title": "Airport pop-culture mentions",
+      "creator": "Wikipedia",
+      "sourceTitle": "Compton/Woodley Airport",
+      "caption": "Airport entry documents references in music and television segments.",
+      "tags": [
+        "compton-airport",
+        "pop-culture",
+        "television"
+      ],
+      "heatWeight": 0.58,
+      "resource": {
+        "kind": "web",
+        "url": "https://en.wikipedia.org/wiki/Compton/Woodley_Airport",
+        "label": "Wikipedia"
       }
     }
   ]

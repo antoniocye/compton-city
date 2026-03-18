@@ -1,64 +1,130 @@
-/**
- * Compton, CA — OSM relation 112057.
- * 29 vertices, zero self-intersections verified.
- * Winds CLOCKWISE (GeoJSON polygon hole convention).
- */
-export const COMPTON_BOUNDARY_CW: [number, number][] = [
-  [-118.2061878, 33.8704520],
-  [-118.2069633, 33.8737140],
-  [-118.2596498, 33.8860748],
-  [-118.2595927, 33.8860479],
-  [-118.2595602, 33.8859957],
-  [-118.2613702, 33.8860842],
-  [-118.2601209, 33.8954506],
-  [-118.2577155, 33.8959460],
-  [-118.2590555, 33.9025434],
-  [-118.2612100, 33.9024580],
-  [-118.2626310, 33.9055490],
-  [-118.2609180, 33.9091450],
-  [-118.2544802, 33.9160759],
-  [-118.2383411, 33.9162172],
-  [-118.2307912, 33.9077368],
-  [-118.2274573, 33.9082224],
-  [-118.2283240, 33.9207300],
-  [-118.2139545, 33.9126485],
-  [-118.2057706, 33.9126635],
-  [-118.1949170, 33.9032440],
-  [-118.1984229, 33.9059003],
-  [-118.1982975, 33.9035888],
-  [-118.1991850, 33.9013050],
-  [-118.1980020, 33.8931910],
-  [-118.1974330, 33.8915400],
-  [-118.1972480, 33.8887460],
-  [-118.1902030, 33.8894010],
-  [-118.2061878, 33.8704520],
-  [-118.2726310, 33.8565060],
-  [-118.2061878, 33.8704520],
+import boundarySnapshot from "@/data/comptonBoundary.snapshot.json";
+
+type Ring = [number, number][];
+type PolygonRings = Ring[];
+type MultiPolygonRings = PolygonRings[];
+
+interface BoundarySnapshot {
+  meta: {
+    sourceUrl: string;
+    sourceLayer: string;
+    cityName: string;
+    featureType: string;
+    fetchedAt: string;
+    lastEditedDateMs: number | null;
+    lastEditedDateIso: string | null;
+    ringStats: {
+      outerRingCount: number;
+      innerRingCount: number;
+      verticesOuter: number;
+      verticesInner: number;
+      verticesTotal: number;
+    };
+    bounds: [[number, number], [number, number]];
+  };
+  feature: {
+    type: "Feature";
+    properties: {
+      CITY_NAME: string;
+      FEAT_TYPE: string;
+      last_edited_date: number | null;
+    };
+    geometry:
+      | {
+          type: "Polygon";
+          coordinates: PolygonRings;
+        }
+      | {
+          type: "MultiPolygon";
+          coordinates: MultiPolygonRings;
+        };
+  };
+}
+
+const SNAPSHOT = boundarySnapshot as BoundarySnapshot;
+
+function polygonsFromGeometry(
+  geometry: GeoJSON.Polygon | GeoJSON.MultiPolygon
+): PolygonRings[] {
+  if (geometry.type === "Polygon") return [geometry.coordinates as PolygonRings];
+  return geometry.coordinates as MultiPolygonRings;
+}
+
+function reverseRing(ring: Ring): Ring {
+  return [...ring].reverse() as Ring;
+}
+
+function computeBoundsFromOuterRings(
+  outerRings: Ring[]
+): [[number, number], [number, number]] {
+  let minLng = Number.POSITIVE_INFINITY;
+  let minLat = Number.POSITIVE_INFINITY;
+  let maxLng = Number.NEGATIVE_INFINITY;
+  let maxLat = Number.NEGATIVE_INFINITY;
+
+  for (const ring of outerRings) {
+    for (const [lng, lat] of ring) {
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+    }
+  }
+
+  return [
+    [minLng, minLat],
+    [maxLng, maxLat],
+  ];
+}
+
+export const COMPTON_BOUNDARY_META = SNAPSHOT.meta;
+
+export const COMPTON_CITY_GEOJSON = SNAPSHOT.feature as unknown as GeoJSON.Feature<
+  GeoJSON.Polygon | GeoJSON.MultiPolygon
+>;
+
+const polygons = polygonsFromGeometry(COMPTON_CITY_GEOJSON.geometry);
+const outerRings = polygons.map((polygon) => polygon[0]);
+const innerRings = polygons.flatMap((polygon) => polygon.slice(1));
+
+export const COMPTON_BORDER_GEOJSON: GeoJSON.FeatureCollection<GeoJSON.LineString> = {
+  type: "FeatureCollection",
+  features: polygons.flatMap((polygon, polygonIndex) =>
+    polygon.map((ring, ringIndex) => ({
+      type: "Feature" as const,
+      properties: {
+        polygonIndex,
+        ringIndex,
+        ringType: ringIndex === 0 ? "outer" : "hole",
+      },
+      geometry: {
+        type: "LineString",
+        coordinates: ring,
+      },
+    }))
+  ),
+};
+
+const WORLD_EXTERIOR_CCW: Ring = [
+  [-180, -90],
+  [-180, 90],
+  [180, 90],
+  [180, -90],
+  [-180, -90],
 ];
 
-const WORLD_EXTERIOR_CCW: [number, number][] = [
-  [-180, -90], [-180, 90], [180, 90], [180, -90], [-180, -90],
-];
-
-export const COMPTON_MASK_GEOJSON: GeoJSON.Feature<GeoJSON.Polygon> = {
+export const COMPTON_MASK_GEOJSON: GeoJSON.Feature<GeoJSON.MultiPolygon> = {
   type: "Feature",
   properties: {},
   geometry: {
-    type: "Polygon",
-    coordinates: [WORLD_EXTERIOR_CCW, COMPTON_BOUNDARY_CW],
+    type: "MultiPolygon",
+    coordinates: [
+      // Polygon 1: world shell with Compton outer rings as holes.
+      [WORLD_EXTERIOR_CCW, ...outerRings.map((ring) => reverseRing(ring))],
+      // Polygon 2..N: each enclave becomes its own filled polygon.
+      ...innerRings.map((ring) => [reverseRing(ring)]),
+    ],
   },
 };
 
-export const COMPTON_BORDER_GEOJSON: GeoJSON.Feature<GeoJSON.LineString> = {
-  type: "Feature",
-  properties: {},
-  geometry: {
-    type: "LineString",
-    coordinates: COMPTON_BOUNDARY_CW,
-  },
-};
-
-export const COMPTON_BOUNDS: [[number, number], [number, number]] = [
-  [-118.282631, 33.846506],
-  [-118.180203, 33.930730],
-];
+export const COMPTON_BOUNDS = computeBoundsFromOuterRings(outerRings);

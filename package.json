@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run boundary:verify && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "boundary:update": "node scripts/updateComptonBoundarySnapshot.mjs",
+    "boundary:verify": "node scripts/verifyComptonBoundarySnapshot.mjs",
+    "boundary:refresh": "npm run boundary:update && npm run boundary:verify"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.6",
